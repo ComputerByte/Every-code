@@ -3550,6 +3550,16 @@ mod agent_merge_tests {
     }
 
     #[test]
+    fn explicitly_configured_claude_command_and_enablement_are_preserved() {
+        let mut opus = agent("claude-opus-5-5", "/custom/bin/claude", true);
+        opus.args = vec!["--model=claude-opus-5-5".to_string()];
+        let merged = merge_with_default_agents(vec![opus]);
+        let entry = merged.iter().find(|a| a.name == "claude-opus-5-5").expect("opus present");
+        assert!(entry.enabled);
+        assert_eq!(entry.command, "/custom/bin/claude");
+    }
+
+    #[test]
     fn disabled_codex_mini_alias_is_preserved() {
         let agents = vec![agent("codex-mini", "coder", false)];
         let merged = merge_with_default_agents(agents);

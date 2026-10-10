@@ -3110,6 +3110,25 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn explicitly_configured_claude_opus_agent_executes_custom_command() {
+        let dir = tempdir().expect("tempdir");
+        let executable = script_path(dir.path(), "claude");
+        write_argv_script(&executable);
+        let mut cfg = agent_with_command(executable.to_str().expect("path"));
+        cfg.name = "claude-opus-5-5".to_string();
+        cfg.enabled = true;
+        let output = execute_model_with_permissions("mock-agent", "claude-opus-5-5", "task", true,
+            None, Some(cfg), ReasoningEffort::High, None, None, None).await.expect("launch");
+        let args: Vec<&str> = output.trim().split('|').collect();
+        let model_index = args.iter().position(|arg| *arg == "--model").expect("model argument");
+        assert_eq!(args[model_index + 1], "claude-opus-5-5");
+        let effort_index = args.iter().position(|arg| *arg == "--effort").expect("effort argument");
+        assert_eq!(args[effort_index + 1], "high");
+        assert!(args.contains(&"--allowedTools"));
+        assert!(args.contains(&"-p"));
+    }
+
+    #[tokio::test]
     async fn gpt_6_1_agent_launch_preserves_max_and_explicit_override() {
         let dir = tempdir().expect("tempdir");
         let executable = script_path(dir.path(), "mock-coder");

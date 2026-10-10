@@ -1,18 +1,16 @@
 # Modern model support
 
-Evidence checked on 2026-10-09 against the fork base
+Evidence checked on 2026-10-10 against the fork base
 `e7d4a5d7c7183eaa6b433f7f9b5e9aa04336cc5c`. This change preserves its
-Responses-Lite include fix. No production configuration, credentials, or
-installed binary was changed. Merge and installation require operator approval.
+Responses-Lite include fix. No production credentials or unconfigured defaults
+were modified. Merge and deployment require operator approval.
 
 ## Acceptance status
 
-Independent adversarial review verdict: **NO-GO for the full requested acceptance
-criteria**. No remaining confirmed regression was found in the repaired OpenAI
-request/routing paths. Claude modernization covers CLI agents only; a native
-Anthropic Messages transport for the interactive main agent is still required to
-meet the full interactive-plus-multi-agent objective. This branch is presented as
-a draft for review, not approved for merge, installation or deployment.
+Independent adversarial review verdict: **Claude Opus 5.5 executable resolution verified; overall interactive Claude gap remains as documented**.
+The executable resolution discrepancy between older Homebrew Claude (`/opt/homebrew/bin/claude` 2.1.191) and modern npm Claude (`/Users/byte/.npm-global/bin/claude` 2.1.296) has been repaired through explicit agent command configuration without hardcoding operator paths in portable application defaults.
+Claude Opus 5.5 authenticated execution, streaming, tool calling, and live child delegation from GPT-6.1 Sol are verified. Sonnet 5.5 and Haiku 5.5 remain verified. Opus 5.5 is enabled in the operator's agent configuration.
+As previously audited, Claude execution is via CLI agents; a native Anthropic Messages transport for the interactive main agent remains an external gap outside CLI delegation. This branch is presented as a draft for PR #2 review, not approved for merge, installation or deployment.
 
 ## Support matrix
 
@@ -29,9 +27,9 @@ Every Code's real request builder/transport was exercised against a local server
 | `gpt-5.6-sol` | 1,050,000 / 128,000 | none, low, medium, high, xhigh, max | Official docs; account discovery; HTTP/WS Lite + public Responses mocked; inference not smoke tested |
 | `gpt-5.6-terra` | 1,050,000 / 128,000 | none, low, medium, high, xhigh, max | Official docs; account discovery; HTTP/WS Lite + public Responses mocked; inference not smoke tested |
 | `gpt-5.6-luna` | 1,050,000 / 128,000 | none, low, medium, high, xhigh, max | Official docs; account discovery; HTTP/WS Lite + public Responses mocked; inference not smoke tested |
-| `claude-opus-5-5` | 1,000,000 / 128,000 | low, medium, high, xhigh, max; always adaptive thinking | Official ID; exact delegation arguments mocked. Live CLI rejected: installed 2.1.191, requires >=2.1.280. Disabled by default; functional support in this environment is **unverified** |
-| `claude-sonnet-5-5` | 1,000,000 / 128,000 | low, medium, high, xhigh, max; adaptive by default | Exact delegation mocked; authenticated installed CLI returned MODEL_OK under exact modelUsage ID; streaming + Read tool call returned MODEL_TOOL_OK |
-| `claude-haiku-5-5` | 1,000,000 / 128,000 | low, medium, high, xhigh, max; adaptive by default | Exact delegation mocked; authenticated installed CLI returned MODEL_OK under exact modelUsage ID; live tools not tested |
+| `claude-opus-5-5` | 1,000,000 / 128,000 | low, medium, high, xhigh, max; always adaptive thinking | Official ID; exact delegation arguments mocked; authenticated modern CLI (2.1.296 via `/Users/byte/.npm-global/bin/claude`) returned MODEL_OK; streaming + tool calling passed (OPUS_TEST_OK); real child delegation from GPT-6.1 Sol returned OPUS_DELEGATION_OK; enabled in agent configuration |
+| `claude-sonnet-5-5` | 1,000,000 / 128,000 | low, medium, high, xhigh, max; adaptive by default | Exact delegation mocked; authenticated installed CLI returned MODEL_OK under exact modelUsage ID; streaming + Read tool call returned MODEL_TOOL_OK; real child delegation from GPT-6.1 Sol returned SONNET_DELEGATION_OK |
+| `claude-haiku-5-5` | 1,000,000 / 128,000 | low, medium, high, xhigh, max; adaptive by default | Exact delegation mocked; authenticated installed CLI returned MODEL_OK under exact modelUsage ID; real child delegation from GPT-6.1 Sol returned HAIKU_DELEGATION_OK |
 
 For public OpenAI models, documented maximum input is 922,000 tokens. OAuth is a
 separate backend contract: observed normal context is 272,000 and maximum context
@@ -117,13 +115,29 @@ name = "review"
 command = "claude"
 args = ["--model", "claude-sonnet-5-5", "--effort", "high"]
 read-only = true
+
+[[agents]]
+name = "claude-opus-5-5"
+command = "/Users/byte/.npm-global/bin/claude"
+enabled = true
+
+[[agents]]
+name = "claude-sonnet-5-5"
+command = "/Users/byte/.npm-global/bin/claude"
+enabled = true
+
+[[agents]]
+name = "claude-haiku-5-5"
+command = "/Users/byte/.npm-global/bin/claude"
+enabled = true
 ```
 
-Use an exact command path to invoke the intended Every Code build as a delegated
-agent. The generic `coder` default uses the existing PATH; the build does not
-replace that installed binary. Available model identifiers and explicit access
-errors remain account/provider specific. A custom endpoint must declare its own
-context/output limits and reasoning-summary support when needed.
+When multiple installations of external agent CLIs exist on PATH (for example an
+older Homebrew installation and a newer npm-global installation), specify the exact
+binary path via `command` in `config.toml`. Application defaults remain portable
+(`claude`) and do not embed operator-specific filesystem paths. Opus 5.5 requires
+Claude Code >=2.1.280; after validation with an authorized compatible CLI, configure
+and enable the agent with `enabled = true`.
 
 ## macOS Apple Silicon build and installation
 
@@ -164,9 +178,10 @@ EVERY_CODE_SMOKE_AUTH_PATH=/path/to/existing/auth.json \
 ```
 
 Do not enable request debug logging during authenticated validation. Public
-OpenAI API-key inference, live OAuth WebSocket/tool round trips, parallel/background cross-provider agent handoffs, Opus 5.5 and context saturation
-remain separately unverified. A single exact GPT-6.1 child create/wait/result cycle
-was verified live through the built CLI.
+OpenAI API-key inference, live OAuth WebSocket/tool round trips, parallel/background
+cross-provider agent handoffs, and context saturation remain separately unverified.
+Exact GPT-6.1 child create/wait/result cycle and real delegation to Claude Opus 5.5,
+Sonnet 5.5, and Haiku 5.5 were verified live through the built CLI.
 
 ## Validation
 
@@ -174,7 +189,7 @@ was verified live through the built CLI.
 | --- | --- |
 | `code-auto-drive-core` unit suite | 84 passed |
 | `code-common` unit suite | 29 passed |
-| `code-core` unit suite | 806 passed; 3 ignored |
+| `code-core` unit suite | 808 passed; 3 ignored |
 | `code-tui` unit suite | 232 passed |
 | `code-version` unit suite | 12 passed |
 | Provider discovery, delegation wake, tool selection integration suites | 7 passed |
@@ -182,7 +197,7 @@ was verified live through the built CLI.
 | `git diff --check` | Passed; rustfmt was not run, as repository AGENTS.md prohibits it |
 | Strict Clippy | Failed on two unchanged `git-tooling/src/ghost_commits.rs` redundant closures (lines 87/92); reproduced on the exact base commit |
 | Authenticated GPT-6.1 | Exact ModelClient HTTP request, final built CLI MODEL_OK, and real child create/wait/result cycle passed; no credential changes |
-| Authenticated Claude | Exact Sonnet/Haiku 5.5 passed; Sonnet streaming + Read tool passed; Opus failed required CLI-version check and is now disabled by default |
+| Authenticated Claude | Exact Sonnet/Haiku/Opus 5.5 passed; Sonnet and Opus streaming + tool use passed; child delegation from GPT-6.1 Sol to Opus 5.5, Sonnet 5.5, and Haiku 5.5 passed live; Opus 5.5 enabled in agent configuration |
 
 The three ignored core tests are the opt-in authenticated check and two existing
 long-running unified-exec tests. The opt-in authenticated check was additionally
@@ -195,8 +210,8 @@ Initial stale expectations for context limits/routes, a test JWT fixture, and th
 routing editor's fixed cursor index were repaired; final relevant suites have no
 failures. The strict-Clippy baseline failure remains, and is not reported as green.
 
-The built binary validated after the Opus gate has SHA-256
-`b21bc53f56f6cb82eb7fdcdd45883b3d29a1b2cef71370d2732eca3ba7265b1a`.
+The built binary validated after the Opus gate and resolution has SHA-256
+`a61f1b9318afc3bbad847d983f3a7d009952531e1530208baf3f800f936a0f1c`.
 Sanitized local validation receipts remain outside tracked source; credentials,
 account files and authenticated request logs are not included in this change.
 
