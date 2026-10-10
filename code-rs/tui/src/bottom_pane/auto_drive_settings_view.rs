@@ -4,7 +4,6 @@ use crate::colors;
 use code_core::config_types::{
     AutoDriveModelRoutingEntry,
     ReasoningEffort,
-    default_auto_drive_model_routing_entries,
 };
 use crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::buffer::Buffer;
@@ -18,12 +17,14 @@ use super::bottom_pane_view::{BottomPaneView, ConditionalUpdate};
 use super::settings_panel::{PanelFrameStyle, render_panel};
 use super::BottomPane;
 
-const ROUTING_REASONING_LEVELS: [ReasoningEffort; 5] = [
+const ROUTING_REASONING_LEVELS: [ReasoningEffort; 7] = [
+    ReasoningEffort::Disabled,
     ReasoningEffort::Minimal,
     ReasoningEffort::Low,
     ReasoningEffort::Medium,
     ReasoningEffort::High,
     ReasoningEffort::XHigh,
+    ReasoningEffort::Max,
 ];
 
 const ROUTING_DESCRIPTION_MAX_CHARS: usize = 200;
@@ -86,7 +87,7 @@ struct RoutingEditorState {
     model_cursor: usize,
     enabled: bool,
     reasoning_cursor: usize,
-    reasoning_enabled: [bool; 5],
+    reasoning_enabled: [bool; ROUTING_REASONING_LEVELS.len()],
     description: String,
     selected_field: RoutingEditorField,
 }
@@ -97,7 +98,7 @@ impl RoutingEditorState {
         entry: Option<&AutoDriveModelRoutingEntry>,
         model_options: &[String],
     ) -> Self {
-        let mut reasoning_enabled = [false; 5];
+        let mut reasoning_enabled = [false; ROUTING_REASONING_LEVELS.len()];
         let mut model_cursor = 0;
         let mut enabled = true;
         let mut description = String::new();
@@ -121,11 +122,16 @@ impl RoutingEditorState {
             reasoning_enabled[high_idx] = true;
         }
 
+        let supported = model_options.get(model_cursor)
+            .and_then(|model| code_core::modern_models::reasoning_efforts(model));
+        let reasoning_cursor = ROUTING_REASONING_LEVELS.iter()
+            .position(|level| supported.is_none_or(|levels| levels.contains(level)))
+            .unwrap_or(0);
         Self {
             index,
             model_cursor,
             enabled,
-            reasoning_cursor: 0,
+            reasoning_cursor,
             reasoning_enabled,
             description,
             selected_field: RoutingEditorField::Model,
@@ -190,11 +196,7 @@ impl AutoDriveSettingsView {
     ) -> Self {
         let diagnostics_enabled = qa_automation_enabled && (review_enabled || cross_check_enabled);
         let normalized_entries = Self::sanitize_routing_entries(model_routing_entries);
-        let model_routing_entries = if normalized_entries.is_empty() {
-            default_auto_drive_model_routing_entries()
-        } else {
-            normalized_entries
-        };
+        let model_routing_entries = normalized_entries;
         let routing_model_options =
             Self::build_routing_model_options(routing_model_options, &model_routing_entries);
 
@@ -246,10 +248,6 @@ impl AutoDriveSettingsView {
         }
 
         let normalized = trimmed.to_ascii_lowercase();
-        if !normalized.starts_with("gpt-") {
-            return None;
-        }
-
         Some(normalized)
     }
 
@@ -272,9 +270,6 @@ impl AutoDriveSettingsView {
                 continue;
             };
             let reasoning_levels = Self::normalize_routing_reasoning_levels(&entry.reasoning_levels);
-            if reasoning_levels.is_empty() {
-                continue;
-            }
 
             normalized_entries.push(AutoDriveModelRoutingEntry {
                 model,
@@ -375,6 +370,8 @@ impl AutoDriveSettingsView {
             ReasoningEffort::Medium => "Medium",
             ReasoningEffort::Low => "Low",
             ReasoningEffort::Minimal => "Minimal",
+            ReasoningEffort::Max => "Max",
+            ReasoningEffort::Disabled => "None",
             ReasoningEffort::None => "None",
         }
     }
@@ -465,9 +462,6 @@ impl AutoDriveSettingsView {
         }
 
         self.model_routing_entries.remove(index);
-        if self.model_routing_entries.is_empty() {
-            self.model_routing_entries = default_auto_drive_model_routing_entries();
-        }
         let max_row = self.routing_row_count().saturating_sub(1);
         self.routing_selected_index = self.routing_selected_index.min(max_row);
         self.send_update();
@@ -750,9 +744,11 @@ impl AutoDriveSettingsView {
             format!("Enabled: {}", if editor.enabled { "Yes" } else { "No" }),
         ));
 
+        let supported = code_core::modern_models::reasoning_efforts(&model);
         let reasoning_parts = ROUTING_REASONING_LEVELS
             .iter()
             .enumerate()
+            .filter(|(_, level)| supported.is_none_or(|levels| levels.contains(level)))
             .map(|(idx, level)| {
                 let cursor = if editor.reasoning_cursor == idx {
                     ">"
@@ -994,6 +990,13 @@ impl AutoDriveSettingsView {
             return;
         }
 
+        if let Some(supported) = code_core::modern_models::reasoning_efforts(&model) {
+            if reasoning_levels.iter().any(|level| !supported.contains(level)) {
+                self.set_status_message(format!("Select reasoning levels supported by {model}."));
+                return;
+            }
+        }
+
         let entry = AutoDriveModelRoutingEntry {
             model,
             enabled: editor.enabled,
@@ -1014,7 +1017,7 @@ impl AutoDriveSettingsView {
 
         let sanitized = Self::sanitize_routing_entries(updated_entries);
         if sanitized.is_empty() {
-            self.set_status_message("At least one valid gpt-* routing entry is required.");
+            self.set_status_message("At least one named routing entry is required.");
             return;
         }
         if self.model_routing_enabled && !sanitized.iter().any(|entry| entry.enabled) {
@@ -1080,6 +1083,10 @@ impl AutoDriveSettingsView {
         let mut request_cancel = false;
         let has_models = !self.routing_model_options.is_empty();
         let model_options_len = self.routing_model_options.len();
+        let supported = if let AutoDriveSettingsMode::RoutingEditor(editor) = &self.mode {
+            self.routing_model_options.get(editor.model_cursor)
+                .and_then(|model| code_core::modern_models::reasoning_efforts(model))
+        } else { None };
 
         self.update_routing_editor(|editor| match editor.selected_field {
             RoutingEditorField::Model => match key_event.code {
@@ -1117,15 +1124,23 @@ impl AutoDriveSettingsView {
                     } else {
                         editor.reasoning_cursor -= 1;
                     }
+                    while supported.is_some_and(|levels| !levels.contains(&ROUTING_REASONING_LEVELS[editor.reasoning_cursor])) {
+                        editor.reasoning_cursor = (editor.reasoning_cursor + ROUTING_REASONING_LEVELS.len() - 1) % ROUTING_REASONING_LEVELS.len();
+                    }
                     handled = true;
                 }
                 KeyCode::Right => {
                     editor.reasoning_cursor =
                         (editor.reasoning_cursor + 1) % ROUTING_REASONING_LEVELS.len();
+                    while supported.is_some_and(|levels| !levels.contains(&ROUTING_REASONING_LEVELS[editor.reasoning_cursor])) {
+                        editor.reasoning_cursor = (editor.reasoning_cursor + 1) % ROUTING_REASONING_LEVELS.len();
+                    }
                     handled = true;
                 }
                 KeyCode::Enter | KeyCode::Char(' ') => {
-                    editor.toggle_reasoning_at_cursor();
+                    if supported.is_none_or(|levels| levels.contains(&ROUTING_REASONING_LEVELS[editor.reasoning_cursor])) {
+                        editor.toggle_reasoning_at_cursor();
+                    }
                     handled = true;
                 }
                 _ => {}
@@ -1267,6 +1282,35 @@ mod tests {
     use super::*;
     use std::sync::mpsc::channel;
 
+    #[test]
+    fn routing_editor_preserves_max_and_explicit_empty_routes() {
+        let entry = AutoDriveModelRoutingEntry {
+            model: "gpt-6.1-sol".into(), enabled: true,
+            reasoning_levels: vec![ReasoningEffort::Max], description: String::new(),
+        };
+        let editor = RoutingEditorState::from_entry(Some(0), Some(&entry), &[entry.model.clone()]);
+        assert_eq!(editor.selected_reasoning_levels(), vec![ReasoningEffort::Max]);
+        assert!(build_view(false, vec![]).model_routing_entries.is_empty());
+    }
+
+    #[test]
+    fn priority_routing_editor_skips_unsupported_efforts() {
+        let mut view = build_view(true, vec![AutoDriveModelRoutingEntry {
+            model: "gpt-6.1-sol".into(), enabled: true,
+            reasoning_levels: vec![ReasoningEffort::Max], description: String::new(),
+        }]);
+        view.open_routing_editor(Some(0));
+        if let AutoDriveSettingsMode::RoutingEditor(editor) = &mut view.mode {
+            editor.selected_field = RoutingEditorField::Reasoning;
+        }
+        for _ in 0..10 {
+            view.handle_key_event_direct(key(KeyCode::Right));
+            let AutoDriveSettingsMode::RoutingEditor(editor) = &view.mode else { panic!("editor"); };
+            assert!(code_core::modern_models::reasoning_efforts("gpt-6.1-sol").unwrap()
+                .contains(&ROUTING_REASONING_LEVELS[editor.reasoning_cursor]));
+        }
+    }
+
     fn key(code: KeyCode) -> KeyEvent {
         KeyEvent::new(code, KeyModifiers::NONE)
     }
@@ -1388,7 +1432,7 @@ mod tests {
 
         view.handle_key_event_direct(key(KeyCode::Down));
         view.handle_key_event_direct(key(KeyCode::Down));
-        for _ in 0..3 {
+        for _ in 0..ROUTING_REASONING_LEVELS.iter().position(|level| *level == ReasoningEffort::High).unwrap() {
             view.handle_key_event_direct(key(KeyCode::Right));
         }
         view.handle_key_event_direct(key(KeyCode::Enter));

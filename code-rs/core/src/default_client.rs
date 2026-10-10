@@ -122,6 +122,16 @@ pub fn requested_model_headers(originator_override: Option<&str>, model: &str) -
     headers
 }
 
+pub fn requested_codex_backend_model_headers(originator: Option<&str>, model: &str) -> HeaderMap {
+    let version = code_version::codex_backend_version_for_model(model);
+    let suffix = USER_AGENT_SUFFIX.lock().ok().and_then(|guard| guard.clone());
+    let user_agent = get_code_user_agent_with_version(originator, suffix.as_deref(), &version);
+    let mut headers = requested_model_headers(originator, model);
+    headers.insert("version", HeaderValue::from_str(&version).expect("verified backend version"));
+    headers.insert(reqwest::header::USER_AGENT, HeaderValue::from_str(&user_agent).expect("backend user agent"));
+    headers
+}
+
 pub fn get_code_user_agent_with_suffix(
     originator_override: Option<&str>,
     user_agent_suffix: Option<&str>,

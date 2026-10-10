@@ -113,6 +113,8 @@ fn cli_routing_reasoning_priority(level: ReasoningEffort) -> u8 {
         ReasoningEffort::Medium => 2,
         ReasoningEffort::High => 3,
         ReasoningEffort::XHigh => 4,
+        ReasoningEffort::Max => 5,
+        ReasoningEffort::Disabled => 0,
         ReasoningEffort::None => 5,
     }
 }
@@ -120,11 +122,13 @@ fn cli_routing_reasoning_priority(level: ReasoningEffort) -> u8 {
 fn normalize_cli_routing_reasoning_levels(levels: &[ReasoningEffort]) -> Vec<ReasoningEffort> {
     let mut normalized = Vec::new();
     for level in [
+        ReasoningEffort::Disabled,
         ReasoningEffort::Minimal,
         ReasoningEffort::Low,
         ReasoningEffort::Medium,
         ReasoningEffort::High,
         ReasoningEffort::XHigh,
+        ReasoningEffort::Max,
     ] {
         if levels.contains(&level) {
             normalized.push(level);
@@ -140,6 +144,8 @@ fn cli_reasoning_effort_to_str(level: ReasoningEffort) -> &'static str {
         ReasoningEffort::Medium => "medium",
         ReasoningEffort::High => "high",
         ReasoningEffort::XHigh => "xhigh",
+        ReasoningEffort::Max => "max",
+        ReasoningEffort::Disabled => "none",
         ReasoningEffort::None => "minimal",
     }
 }
@@ -192,10 +198,6 @@ fn normalize_routing_entry_model(model: &str) -> Option<String> {
     }
 
     let normalized = trimmed.to_ascii_lowercase();
-    if !normalized.starts_with("gpt-") {
-        return None;
-    }
-
     Some(normalized)
 }
 
@@ -214,10 +216,6 @@ fn normalize_auto_drive_cli_routing_entries(
         };
 
         let reasoning_levels = normalize_cli_routing_reasoning_levels(&entry.reasoning_levels);
-        if reasoning_levels.is_empty() {
-            continue;
-        }
-
         let description = entry.description.trim().to_string();
         if let Some(existing) = normalized
             .iter_mut()
@@ -253,25 +251,14 @@ fn resolve_auto_drive_cli_routing_entries(
     supports_pro_only_models: bool,
     available_models: &[String],
 ) -> Vec<AutoDriveCliRoutingEntry> {
-    let mut entries = normalize_auto_drive_cli_routing_entries(&settings.model_routing_entries);
-    entries.retain(|entry| {
-        available_models
-            .iter()
-            .any(|model| model.eq_ignore_ascii_case(&entry.model))
-    });
+    let entries = normalize_auto_drive_cli_routing_entries(&settings.model_routing_entries);
+    // Preserve explicit selections, including unavailable ones, so the caller
+    // can report the requested model instead of silently substituting defaults.
+    if settings.model_routing_enabled || !entries.is_empty() { return entries; }
+    auto_drive_cli_routing_entries_for_auth(auth_mode, supports_pro_only_models)
+        .into_iter().filter(|entry| available_models.iter().any(|model| model.eq_ignore_ascii_case(&entry.model)))
+        .collect()
 
-    if entries.is_empty() {
-        return auto_drive_cli_routing_entries_for_auth(auth_mode, supports_pro_only_models)
-            .into_iter()
-            .filter(|entry| {
-                available_models
-                    .iter()
-                    .any(|model| model.eq_ignore_ascii_case(&entry.model))
-            })
-            .collect();
-    }
-
-    entries
 }
 
 fn spark_fallback_model(model: &str) -> Option<&'static str> {
@@ -1257,7 +1244,32 @@ mod tests {
     }
 
     #[test]
-    fn resolve_cli_routing_entries_falls_back_when_enabled_entries_missing() {
+    fn priority_route_max_survives_schema_and_decision_parser() {
+        let routes = vec![AutoDriveCliRoutingEntry {
+            model: "gpt-6.1-sol".into(), reasoning_levels: vec![ReasoningEffort::Max], description: String::new(),
+        }];
+        let schema = build_schema(&[], SchemaFeatures::default(), &routes);
+        assert!(schema["properties"]["cli_reasoning_effort"]["enum"].as_array().unwrap().contains(&json!("max")));
+        let raw = r#"{"finish_status":"continue","status_title":"Work","status_sent_to_user":"Working","cli_milestone_instruction":"Investigate","cli_model":"gpt-6.1-sol","cli_reasoning_effort":"max"}"#;
+        parse_decision(raw, DecisionParseOptions { require_cli_model_routing: true, allowed_cli_routing_entries: routes }).unwrap();
+        assert_eq!(parse_cli_reasoning_effort("none").unwrap(), ReasoningEffort::Disabled);
+        assert_eq!(parse_cli_reasoning_effort("max").unwrap(), ReasoningEffort::Max);
+    }
+
+    #[test]
+    fn default_cli_routes_resolve_actual_agent_model_ids() {
+        let available = enabled_agent_model_specs_for_auth(Some(AuthMode::Chatgpt), true)
+            .into_iter().filter_map(|spec| spec.model_args.windows(2)
+                .find(|pair| pair[0] == "--model").map(|pair| pair[1].to_string()))
+            .collect::<Vec<_>>();
+        let routes = resolve_auto_drive_cli_routing_entries(&AutoDriveSettings::default(),
+            Some(AuthMode::Chatgpt), true, &available);
+        assert!(routes.iter().any(|entry| entry.model == "gpt-6.1-sol"));
+        assert!(routes.iter().all(|entry| available.contains(&entry.model)));
+    }
+
+    #[test]
+    fn resolve_cli_routing_entries_do_not_replace_disabled_explicit_routes() {
         let mut settings = AutoDriveSettings::default();
         settings.model_routing_entries = vec![AutoDriveModelRoutingEntry {
             model: "gpt-5.5".to_string(),
@@ -1278,12 +1290,11 @@ mod tests {
             &available_models,
         );
 
-        assert!(entries.iter().any(|entry| entry.model == AUTO_DRIVE_CLI_MODEL_PRIMARY));
-        assert!(entries.iter().any(|entry| entry.model == AUTO_DRIVE_CLI_MODEL_FAST));
+        assert!(entries.is_empty(), "disabled explicit routes must not select defaults");
     }
 
     #[test]
-    fn resolve_cli_routing_entries_drop_unavailable_models() {
+    fn resolve_cli_routing_entries_preserve_explicit_unavailable_models() {
         let settings = AutoDriveSettings {
             model_routing_entries: vec![
                 AutoDriveModelRoutingEntry {
@@ -1310,12 +1321,12 @@ mod tests {
             &available_models,
         );
 
-        assert_eq!(entries.len(), 1);
-        assert_eq!(entries[0].model, AUTO_DRIVE_CLI_MODEL_PRIMARY);
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[1].model, "gpt-5.3-codex-experimental");
     }
 
     #[test]
-    fn resolve_cli_routing_entries_empty_when_no_available_models() {
+    fn resolve_cli_routing_entries_preserve_selection_without_discovery() {
         let settings = AutoDriveSettings {
             model_routing_entries: vec![AutoDriveModelRoutingEntry {
                 model: AUTO_DRIVE_CLI_MODEL_PRIMARY.to_string(),
@@ -1329,7 +1340,7 @@ mod tests {
         let entries =
             resolve_auto_drive_cli_routing_entries(&settings, Some(AuthMode::Chatgpt), true, &[]);
 
-        assert!(entries.is_empty());
+        assert_eq!(entries[0].model, AUTO_DRIVE_CLI_MODEL_PRIMARY);
     }
 
     #[test]
@@ -1924,7 +1935,7 @@ fn run_auto_loop(
         supports_pro_only_models,
     )
     .into_iter()
-    .map(|spec| spec.slug.to_ascii_lowercase())
+    .filter_map(|spec| spec.model_args.windows(2).find(|pair| pair[0] == "--model").map(|pair| pair[1].to_ascii_lowercase()))
     .filter(|model| model.starts_with("gpt-"))
     .collect::<Vec<_>>();
     let allowed_cli_routing_entries = resolve_auto_drive_cli_routing_entries(
@@ -1933,6 +1944,26 @@ fn run_auto_loop(
         supports_pro_only_models,
         &available_cli_routing_models,
     );
+    if config.auto_drive.model_routing_enabled && allowed_cli_routing_entries.is_empty() {
+        anyhow::bail!("Auto Drive routing requires an explicitly enabled model entry");
+    }
+    for entry in allowed_cli_routing_entries.iter().filter(|_| config.auto_drive.model_routing_enabled) {
+        if entry.reasoning_levels.is_empty() {
+            anyhow::bail!("configured Auto Drive model {} requires a supported reasoning effort", entry.model);
+        }
+        if let Some(supported) = code_core::modern_models::reasoning_efforts(&entry.model) {
+            for effort in &entry.reasoning_levels {
+                if !supported.contains(effort) || (*effort == ReasoningEffort::Disabled
+                    && auth_mode_for_model_access == Some(code_app_server_protocol::AuthMode::Chatgpt)) {
+                    anyhow::bail!("configured Auto Drive model '{}' does not support reasoning effort '{}'; update auto_drive.model_routing_entries", entry.model, cli_reasoning_effort_to_str(*effort));
+                }
+            }
+        }
+
+        if !available_cli_routing_models.iter().any(|model| model.eq_ignore_ascii_case(&entry.model)) {
+            anyhow::bail!("configured Auto Drive model '{}' is unavailable; enable its agent and verify provider access, or change auto_drive.model_routing_entries", entry.model);
+        }
+    }
     let model_provider = config.model_provider.clone();
     let model_reasoning_summary = config.model_reasoning_summary;
     let model_text_verbosity = config.model_text_verbosity;
@@ -2865,11 +2896,13 @@ fn build_schema(
 
         let mut reasoning_enum: Vec<Value> = Vec::new();
         for level in [
+            ReasoningEffort::Disabled,
             ReasoningEffort::Minimal,
             ReasoningEffort::Low,
             ReasoningEffort::Medium,
             ReasoningEffort::High,
             ReasoningEffort::XHigh,
+            ReasoningEffort::Max,
         ] {
             if cli_routing_entries
                 .iter()
@@ -3113,46 +3146,9 @@ fn request_decision(
         preferred_model_slug,
     ) {
         Ok(result) => Ok(result),
-        Err(err) => {
-            let preferred = preferred_model_slug;
-            let fallback_candidate = client.default_model_slug().to_string();
-            let fallback_slug = if fallback_candidate.eq_ignore_ascii_case(preferred) {
-                MODEL_SLUG.to_string()
-            } else {
-                fallback_candidate
-            };
-            if fallback_slug != preferred_model_slug && should_retry_with_default_model(&err) {
-                debug!(
-                    preferred = %preferred,
-                    fallback = %fallback_slug,
-                    "auto coordinator falling back to configured model after invalid model error"
-                );
-                let original_error = err.to_string();
-                return request_decision_with_model(
-                    runtime,
-                    client,
-                    developer_intro,
-                    primary_goal,
-                    coordinator_prompt.as_deref(),
-                    time_budget_message,
-                    time_budget_deadline,
-                    loop_warning,
-                    schema,
-                    Arc::clone(&conversation),
-                    auto_instructions,
-                    event_tx,
-                    cancel_token,
-                    &fallback_slug,
-                )
-                .map_err(|fallback_err| {
-                    fallback_err.context(format!(
-                        "coordinator fallback with model '{}' failed after original error: {}",
-                        fallback_slug, original_error
-                    ))
-                });
-            }
-            Err(err)
-        }
+        Err(err) => Err(err.context(format!(
+            "coordinator model '{preferred_model_slug}' failed; verify model access and auto_drive.model configuration (no model substitution performed)"
+        ))),
     }
 }
 
@@ -3505,24 +3501,6 @@ fn build_user_turn_prompt(
     prompt.model_family_override = Some(family);
     prompt.set_log_tag("auto/coordinator");
     prompt
-}
-
-fn should_retry_with_default_model(err: &anyhow::Error) -> bool {
-    err.chain().any(|cause| {
-        if let Some(code_err) = cause.downcast_ref::<CodexErr>() {
-            if let CodexErr::UnexpectedStatus(err) = code_err {
-                if !err.status.is_client_error() {
-                    return false;
-                }
-                let body_lower = err.body.to_lowercase();
-                return body_lower.contains("invalid model")
-                    || body_lower.contains("unknown model")
-                    || body_lower.contains("model_not_found")
-                    || body_lower.contains("model does not exist");
-            }
-        }
-        false
-    })
 }
 
 pub(crate) fn classify_model_error(error: &anyhow::Error) -> RetryDecision {
@@ -4377,13 +4355,14 @@ fn parse_cli_reasoning_effort(value: &str) -> Result<ReasoningEffort> {
     let normalized = value.trim().to_ascii_lowercase();
     match normalized.as_str() {
         "minimal" => Ok(ReasoningEffort::Minimal),
-        "none" => Ok(ReasoningEffort::Minimal),
+        "none" => Ok(ReasoningEffort::Disabled),
         "low" => Ok(ReasoningEffort::Low),
         "medium" => Ok(ReasoningEffort::Medium),
         "high" => Ok(ReasoningEffort::High),
         "xhigh" => Ok(ReasoningEffort::XHigh),
+        "max" => Ok(ReasoningEffort::Max),
         _ => Err(anyhow!(
-            "unsupported cli_reasoning_effort '{normalized}'; expected one of: minimal, low, medium, high, xhigh"
+            "unsupported cli_reasoning_effort '{normalized}'; expected one of: none, minimal, low, medium, high, xhigh, max"
         )),
     }
 }

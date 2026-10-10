@@ -40,17 +40,19 @@ const MODELS_MANIFEST: &str = include_str!("../../../codex-rs/models-manager/mod
 /// CLI-name lookups.
 pub const DEFAULT_AGENT_NAMES: &[&str] = &[
     // Frontline for moderate/challenging tasks
+    "code-gpt-6.1-sol",
     "code-gpt-5.5",
+    "code-gpt-5.6-sol",
     "code-gpt-5.6-terra",
     "code-gpt-5.6-luna",
-    "claude-opus-4.8",
+    "claude-opus-5-5",
     "gemini-3.1-pro",
     // Straightforward / cost-aware
-    "claude-sonnet-4.6",
+    "claude-sonnet-5-5",
     "gemini-3.5-flash",
     "github-copilot",
     // Mixed/general and alternates
-    "claude-haiku-4.5",
+    "claude-haiku-5-5",
     "qwen-3-coder",
     "cloud-gpt-5.1-codex-max",
 ];
@@ -104,6 +106,7 @@ const AGENT_MODEL_SPECS: &[AgentModelSpec] = &[
         description: "Highest-capacity GPT option for tricky reasoning; use when correctness matters most.",
         enabled_by_default: true,
         aliases: &[
+            "gpt-5.6-terra",
             "code-gpt-5.2",
             "code-gpt-5.4",
             "gpt-5.4",
@@ -128,6 +131,7 @@ const AGENT_MODEL_SPECS: &[AgentModelSpec] = &[
         description: "Budget coding agent for small changes and quick refactors; use when speed and cost matter.",
         enabled_by_default: true,
         aliases: &[
+            "gpt-5.6-luna",
             "gpt-5.4-mini",
             "code-gpt-5.4-mini",
             "code-gpt-5.1-codex-mini",
@@ -180,21 +184,99 @@ const AGENT_MODEL_SPECS: &[AgentModelSpec] = &[
         pro_only: true,
     },
     AgentModelSpec {
+        slug: "claude-opus-5-5",
+        family: "claude",
+        cli: "claude",
+        read_only_args: CLAUDE_OPUS_READ_ONLY,
+        write_args: CLAUDE_OPUS_WRITE,
+        model_args: &["--model", "claude-opus-5-5"],
+        description: "Claude Opus 5.5 requires Claude Code 2.1.280 or newer; exact model selection.",
+        enabled_by_default: false,
+        aliases: &["claude-opus", "claude-opus-5.5"],
+        gating_env: None,
+        is_frontline: true,
+        pro_only: false,
+    },
+    AgentModelSpec {
+        slug: "claude-sonnet-5-5",
+        family: "claude",
+        cli: "claude",
+        read_only_args: CLAUDE_SONNET_READ_ONLY,
+        write_args: CLAUDE_SONNET_WRITE,
+        model_args: &["--model", "claude-sonnet-5-5"],
+        description: "Claude Sonnet via Claude Code; executes the exact selected model.",
+        enabled_by_default: true,
+        aliases: &["claude", "claude-sonnet", "claude-sonnet-5.5"],
+        gating_env: None,
+        is_frontline: false,
+        pro_only: false,
+    },
+    AgentModelSpec {
+        slug: "claude-haiku-5-5",
+        family: "claude",
+        cli: "claude",
+        read_only_args: CLAUDE_HAIKU_READ_ONLY,
+        write_args: CLAUDE_HAIKU_WRITE,
+        model_args: &["--model", "claude-haiku-5-5"],
+        description: "Claude Haiku via Claude Code; executes the exact selected model.",
+        enabled_by_default: true,
+        aliases: &["claude-haiku", "claude-haiku-5.5"],
+        gating_env: None,
+        is_frontline: false,
+        pro_only: false,
+    },
+    AgentModelSpec {
         slug: "claude-opus-4.8",
         family: "claude",
         cli: "claude",
         read_only_args: CLAUDE_OPUS_READ_ONLY,
         write_args: CLAUDE_OPUS_WRITE,
-        model_args: &["--model", "opus"],
-        description: "Higher-capacity Claude model for complex reasoning; use when you want the strongest Claude.",
+        model_args: &["--model", "claude-opus-4-8"],
+        description: "Claude Opus 4.8; preserves exact older model selection.",
         enabled_by_default: true,
-        aliases: &[
-            "claude-opus",
-            "claude-opus-4.1",
-            "claude-opus-4.5",
-            "claude-opus-4.6",
-            "claude-opus-4.7",
-        ],
+        aliases: &["claude-opus-4-8"],
+        gating_env: None,
+        is_frontline: true,
+        pro_only: false,
+    },
+    AgentModelSpec {
+        slug: "claude-opus-4.7",
+        family: "claude",
+        cli: "claude",
+        read_only_args: CLAUDE_OPUS_READ_ONLY,
+        write_args: CLAUDE_OPUS_WRITE,
+        model_args: &["--model", "claude-opus-4-7"],
+        description: "Claude Opus 4.7; preserves exact older model selection.",
+        enabled_by_default: true,
+        aliases: &["claude-opus-4-7"],
+        gating_env: None,
+        is_frontline: true,
+        pro_only: false,
+    },
+    AgentModelSpec {
+        slug: "claude-opus-4.6",
+        family: "claude",
+        cli: "claude",
+        read_only_args: CLAUDE_OPUS_READ_ONLY,
+        write_args: CLAUDE_OPUS_WRITE,
+        model_args: &["--model", "claude-opus-4-6"],
+        description: "Claude Opus 4.6; preserves exact older model selection.",
+        enabled_by_default: true,
+        aliases: &["claude-opus-4-6"],
+        gating_env: None,
+        is_frontline: true,
+        pro_only: false,
+    },
+    AgentModelSpec {
+        slug: "claude-opus-4.5",
+        family: "claude",
+        cli: "claude",
+        read_only_args: CLAUDE_OPUS_READ_ONLY,
+        write_args: CLAUDE_OPUS_WRITE,
+        model_args: &["--model", "claude-opus-4-5-20251101"],
+        description: "Claude Opus 4.5; preserves exact older model selection.",
+        enabled_by_default: true,
+        aliases: &["claude-opus-4-5-20251101"],
         gating_env: None,
         is_frontline: true,
         pro_only: false,
@@ -205,10 +287,24 @@ const AGENT_MODEL_SPECS: &[AgentModelSpec] = &[
         cli: "claude",
         read_only_args: CLAUDE_SONNET_READ_ONLY,
         write_args: CLAUDE_SONNET_WRITE,
-        model_args: &["--model", "sonnet"],
-        description: "Balanced Claude model for implementation and debugging; a solid default when you want Claude.",
+        model_args: &["--model", "claude-sonnet-4-6"],
+        description: "Claude Sonnet via Claude Code; executes the exact selected model.",
         enabled_by_default: true,
-        aliases: &["claude", "claude-sonnet", "claude-sonnet-4.5"],
+        aliases: &["claude-sonnet-4-6"],
+        gating_env: None,
+        is_frontline: false,
+        pro_only: false,
+    },
+    AgentModelSpec {
+        slug: "claude-sonnet-4.5",
+        family: "claude",
+        cli: "claude",
+        read_only_args: CLAUDE_SONNET_READ_ONLY,
+        write_args: CLAUDE_SONNET_WRITE,
+        model_args: &["--model", "claude-sonnet-4-5-20250929"],
+        description: "Claude Sonnet via Claude Code; executes the exact selected model.",
+        enabled_by_default: true,
+        aliases: &["claude-sonnet-4-5-20250929"],
         gating_env: None,
         is_frontline: false,
         pro_only: false,
@@ -219,10 +315,10 @@ const AGENT_MODEL_SPECS: &[AgentModelSpec] = &[
         cli: "claude",
         read_only_args: CLAUDE_HAIKU_READ_ONLY,
         write_args: CLAUDE_HAIKU_WRITE,
-        model_args: &["--model", "haiku"],
-        description: "Fast Claude model for simple tasks, drafts, and quick iterations; pick when latency matters.",
+        model_args: &["--model", "claude-haiku-4-5-20251001"],
+        description: "Claude Haiku via Claude Code; executes the exact selected model.",
         enabled_by_default: true,
-        aliases: &["claude-haiku"],
+        aliases: &["claude-haiku-4-5-20251001"],
         gating_env: None,
         is_frontline: false,
         pro_only: false,
@@ -353,13 +449,18 @@ fn dynamic_code_agent_specs() -> Vec<AgentModelSpec> {
 
 fn dynamic_code_agent_spec(model: ManifestModel) -> Option<AgentModelSpec> {
     let track = code_agent_track(&model.slug)?;
-    if static_agent_model_spec(&model.slug).is_some() {
+    if static_agent_model_spec(&model.slug).is_some()
+        || static_agent_model_spec(&format!("code-{}", model.slug)).is_some()
+    {
         return None;
     }
 
     let candidate_version = parse_model_version_components(&model.slug)?;
     let highest_static_version = highest_static_code_track_version(track)?;
-    if candidate_version <= highest_static_version && model.slug != "gpt-5.5" {
+    if candidate_version <= highest_static_version
+        && model.slug != "gpt-5.5"
+        && crate::modern_models::modern_model(&model.slug).is_none()
+    {
         return None;
     }
 
@@ -704,6 +805,16 @@ mod tests {
     use super::*;
 
     #[test]
+    fn every_modern_openai_model_has_an_exact_agent_route() {
+        for spec in crate::modern_models::MODERN_MODELS {
+            let agent = agent_model_spec(spec.id).expect("agent route");
+            assert_eq!(agent.model_args, &["--model", spec.id]);
+            assert_eq!(agent.family, "code");
+        }
+        assert!(agent_model_spec("gpt-6-terra").is_none());
+    }
+
+    #[test]
     fn cloud_defaults_are_empty_both_modes() {
         assert!(default_params_for("cloud", true).is_empty());
         assert!(default_params_for("cloud", false).is_empty());
@@ -770,13 +881,13 @@ mod tests {
     #[test]
     fn refreshed_provider_agent_aliases_resolve_to_current_defaults() {
         let opus = agent_model_spec("claude-opus-4.6").expect("legacy opus alias resolves");
-        assert_eq!(opus.slug, "claude-opus-4.8");
-        assert_eq!(opus.model_args, &["--model", "opus"]);
+        assert_eq!(opus.slug, "claude-opus-4.6");
+        assert_eq!(opus.model_args, &["--model", "claude-opus-4-6"]);
 
         let sonnet =
             agent_model_spec("claude-sonnet-4.5").expect("legacy sonnet alias resolves");
-        assert_eq!(sonnet.slug, "claude-sonnet-4.6");
-        assert_eq!(sonnet.model_args, &["--model", "sonnet"]);
+        assert_eq!(sonnet.slug, "claude-sonnet-4.5");
+        assert_eq!(sonnet.model_args, &["--model", "claude-sonnet-4-5-20250929"]);
 
         let gemini = agent_model_spec("gemini").expect("gemini alias resolves");
         assert_eq!(gemini.slug, "gemini-3.5-flash");
@@ -859,6 +970,13 @@ mod tests {
         assert!(filtered.contains(&"code-gpt-5.3-codex".to_string()));
         assert!(!filtered.contains(&"code-gpt-5.3-codex-spark".to_string()));
         assert!(!filtered.contains(&"gpt-5.3-codex-spark".to_string()));
+    }
+
+    #[test]
+    fn unverified_opus_generation_is_not_enabled_by_default() {
+        let spec = agent_model_spec("claude-opus-5-5").unwrap();
+        assert!(!spec.is_enabled());
+        assert!(!default_agent_configs().iter().any(|agent| agent.name == spec.slug));
     }
 
     #[test]

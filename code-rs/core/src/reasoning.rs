@@ -64,16 +64,19 @@ const DEFAULT_EFFORTS: &[ReasoningEffort] = &[
 
 fn reasoning_effort_rank(effort: ReasoningEffort) -> u8 {
     match effort {
-        ReasoningEffort::Minimal => 0,
+        ReasoningEffort::Disabled | ReasoningEffort::Minimal => 0,
         ReasoningEffort::Low => 1,
         ReasoningEffort::Medium => 2,
         ReasoningEffort::High => 3,
         ReasoningEffort::XHigh => 4,
-        ReasoningEffort::None => 5,
+        ReasoningEffort::Max | ReasoningEffort::None => 5,
     }
 }
 
 pub fn supported_reasoning_efforts_for_model(model: &str) -> &'static [ReasoningEffort] {
+    if let Some(efforts) = crate::modern_models::reasoning_efforts(model) {
+        return efforts;
+    }
     let lower = model.to_ascii_lowercase();
 
     if lower.starts_with("gpt-5.1-codex-max") {
@@ -143,6 +146,14 @@ pub fn clamp_reasoning_effort_for_model(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn modern_models_preserve_exact_max_effort() {
+        let max: ReasoningEffort = serde_json::from_str("\"max\"").expect("max effort parses");
+        for model in ["gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol", "gpt-6-luna", "gpt-6-sol", "gpt-6-astra", "gpt-6.1-sol"] {
+            assert_eq!(clamp_reasoning_effort_for_model(model, max), max, "{model}");
+        }
+    }
 
     #[test]
     fn clamps_xhigh_to_high_for_gpt5() {

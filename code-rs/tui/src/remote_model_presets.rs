@@ -18,6 +18,19 @@ const REMOTE_TEXT_VERBOSITY_ALL: &[TextVerbosityConfig] = &[
 ];
 const REMOTE_TEXT_VERBOSITY_MEDIUM: &[TextVerbosityConfig] = &[TextVerbosityConfig::Medium];
 
+pub(crate) fn merge_remote_models_for_provider(
+    remote_models: Vec<ModelInfo>,
+    mut local_presets: Vec<ModelPreset>,
+    auth_mode: Option<AuthMode>,
+    supports_pro_only_models: bool,
+    first_party: bool,
+) -> Vec<ModelPreset> {
+    if !first_party {
+        local_presets.retain(|preset| code_core::modern_models::modern_model(&preset.model).is_none());
+    }
+    merge_remote_models(remote_models, local_presets, auth_mode, supports_pro_only_models)
+}
+
 pub(crate) fn merge_remote_models(
     remote_models: Vec<ModelInfo>,
     local_presets: Vec<ModelPreset>,
@@ -88,9 +101,14 @@ fn model_info_to_preset(info: ModelInfo) -> ModelPreset {
         REMOTE_TEXT_VERBOSITY_MEDIUM
     };
 
+    let modern = code_core::modern_models::modern_model(&info.slug).is_some();
     let supported_reasoning_efforts = info
         .supported_reasoning_levels
         .into_iter()
+        // Modern presets expose only effort values the legacy execution enum
+        // preserves exactly. Do not relabel Ultra as XHigh.
+        .filter(|preset| !modern || !matches!(preset.effort,
+            RemoteReasoningEffort::Ultra | RemoteReasoningEffort::Persistent | RemoteReasoningEffort::Custom(_)))
         .map(|preset| ReasoningEffortPreset {
             effort: map_reasoning_effort(preset.effort),
             description: preset.description,
@@ -122,6 +140,18 @@ fn model_info_to_preset(info: ModelInfo) -> ModelPreset {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn custom_discovery_does_not_advertise_unlisted_modern_models() {
+        let local = code_common::model_presets::builtin_model_presets(Some(AuthMode::ApiKey), false);
+        let presets = merge_remote_models_for_provider(vec![remote_model("proxy-model", 0)], local,
+            Some(AuthMode::ApiKey), false, false);
+        assert!(!presets.iter().any(|preset| preset.model == "gpt-6.1-sol"));
+        let local = code_common::model_presets::builtin_model_presets(Some(AuthMode::ApiKey), false);
+        let presets = merge_remote_models_for_provider(vec![remote_model("gpt-6.1-sol", 0)], local,
+            Some(AuthMode::ApiKey), false, false);
+        assert!(presets.iter().any(|preset| preset.model == "gpt-6.1-sol"));
+    }
 
     fn remote_model(slug: &str, priority: i32) -> ModelInfo {
         serde_json::from_value(serde_json::json!({
@@ -184,13 +214,13 @@ mod tests {
 
 fn map_reasoning_effort(effort: RemoteReasoningEffort) -> ProtocolReasoningEffort {
     match effort {
-        RemoteReasoningEffort::None => ProtocolReasoningEffort::Minimal,
+        RemoteReasoningEffort::None => ProtocolReasoningEffort::None,
         RemoteReasoningEffort::Minimal => ProtocolReasoningEffort::Minimal,
         RemoteReasoningEffort::Low => ProtocolReasoningEffort::Low,
         RemoteReasoningEffort::Medium => ProtocolReasoningEffort::Medium,
         RemoteReasoningEffort::High => ProtocolReasoningEffort::High,
+        RemoteReasoningEffort::Max => ProtocolReasoningEffort::Max,
         RemoteReasoningEffort::XHigh
-        | RemoteReasoningEffort::Max
         | RemoteReasoningEffort::Ultra
         | RemoteReasoningEffort::Persistent => {
             ProtocolReasoningEffort::XHigh

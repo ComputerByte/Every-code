@@ -23089,10 +23089,15 @@ Have we met every part of this goal and is there no further work to do?"#
     }
 
     fn curated_model_presets(presets: Vec<ModelPreset>) -> Vec<ModelPreset> {
-        const MODEL_PICKER_ORDER: [&str; 5] = [
+        const MODEL_PICKER_ORDER: [&str; 10] = [
+            "gpt-6.1-sol",
             "gpt-5.5",
             "gpt-5.6-terra",
             "gpt-5.6-luna",
+            "gpt-5.6-sol",
+            "gpt-6-astra",
+            "gpt-6-sol",
+            "gpt-6-luna",
             "gpt-5.3-codex",
             "gpt-5.3-codex-spark",
         ];
@@ -23135,10 +23140,18 @@ Have we met every part of this goal and is there no further work to do?"#
         } else {
             Some(AuthMode::ApiKey)
         };
-        builtin_model_presets(
+        let mut presets = builtin_model_presets(
             auth_mode,
             self.auth_manager.supports_pro_only_models(),
-        )
+        );
+        // Local first-party entries are not an advertisement by a custom
+        // endpoint. Users can configure an exact custom model explicitly.
+        let first_party = self.config.model_provider_id == "openai"
+            && self.config.model_provider.uses_official_openai_model_catalog();
+        if !first_party {
+            presets.retain(|preset| code_core::modern_models::modern_model(&preset.model).is_none());
+        }
+        presets
     }
 
     fn available_model_presets(&self) -> Vec<ModelPreset> {
@@ -23523,11 +23536,20 @@ Have we met every part of this goal and is there no further work to do?"#
     }
 
     fn sync_session_context_selection_for_model(&mut self) -> bool {
-        let (next_context_window, next_auto_compact) = resolve_context_mode_limits(
+        let (mut next_context_window, mut next_auto_compact) = resolve_context_mode_limits(
             &self.config.model,
-            self.config.context_mode,
+            if self.config.model_provider_id == "openai" && self.config.model_provider.uses_official_openai_model_catalog() {
+                self.config.context_mode
+            } else { Some(ContextMode::Disabled) },
             &self.config.model_family,
         );
+        if self.config.using_chatgpt_auth && self.config.model_provider_id == "openai"
+            && self.config.model_provider.uses_official_openai_model_catalog()
+            && code_core::modern_models::modern_model(&self.config.model).is_some()
+        {
+            next_context_window = next_context_window.map(|limit| limit.min(code_core::modern_models::CODEX_MAX_CONTEXT_WINDOW));
+            next_auto_compact = next_auto_compact.map(|limit| limit.min((code_core::modern_models::CODEX_MAX_CONTEXT_WINDOW * 9 / 10) as i64));
+        }
         let changed = self.config.model_context_window != next_context_window
             || self.config.model_auto_compact_token_limit != next_auto_compact;
         self.config.model_context_window = next_context_window;
@@ -23586,13 +23608,7 @@ Have we met every part of this goal and is there no further work to do?"#
         }
 
         self.config.context_mode = context_mode;
-        let (next_context_window, next_auto_compact) = resolve_context_mode_limits(
-            &self.config.model,
-            self.config.context_mode,
-            &self.config.model_family,
-        );
-        self.config.model_context_window = next_context_window;
-        self.config.model_auto_compact_token_limit = next_auto_compact;
+        self.sync_session_context_selection_for_model();
         self.submit_configure_session_op();
         self.refresh_bottom_pane_token_usage();
 
@@ -23652,6 +23668,8 @@ Have we met every part of this goal and is there no further work to do?"#
                 ReasoningEffort::Medium => 2,
                 ReasoningEffort::High => 3,
                 ReasoningEffort::XHigh => 4,
+                ReasoningEffort::Max => 5,
+                ReasoningEffort::Disabled => 0,
                 ReasoningEffort::None => 5,
             }
         }
@@ -23686,16 +23704,18 @@ Have we met every part of this goal and is there no further work to do?"#
 
     fn sanitize_auto_drive_routing_entries(
         entries: Vec<AutoDriveModelRoutingEntry>,
-        available_models: &[String],
+        _available_models: &[String],
     ) -> Vec<AutoDriveModelRoutingEntry> {
         fn normalize_reasoning(levels: &[ReasoningEffort]) -> Vec<ReasoningEffort> {
             let mut normalized = Vec::new();
             for level in [
+                ReasoningEffort::Disabled,
                 ReasoningEffort::Minimal,
                 ReasoningEffort::Low,
                 ReasoningEffort::Medium,
                 ReasoningEffort::High,
                 ReasoningEffort::XHigh,
+                ReasoningEffort::Max,
             ] {
                 if levels.contains(&level) {
                     normalized.push(level);
@@ -23707,21 +23727,7 @@ Have we met every part of this goal and is there no further work to do?"#
         let mut normalized_entries = Vec::new();
         for entry in entries {
             let model = entry.model.trim().to_ascii_lowercase();
-            if !model.starts_with("gpt-") {
-                continue;
-            }
-
-            if !available_models
-                .iter()
-                .any(|available| available.eq_ignore_ascii_case(&model))
-            {
-                continue;
-            }
-
             let reasoning_levels = normalize_reasoning(&entry.reasoning_levels);
-            if reasoning_levels.is_empty() {
-                continue;
-            }
 
             normalized_entries.push(AutoDriveModelRoutingEntry {
                 model,
@@ -23729,19 +23735,6 @@ Have we met every part of this goal and is there no further work to do?"#
                 reasoning_levels,
                 description: entry.description.trim().to_string(),
             });
-        }
-
-        if normalized_entries.is_empty() {
-            let mut defaults = code_core::config_types::default_auto_drive_model_routing_entries();
-            defaults.retain(|entry| {
-                available_models
-                    .iter()
-                    .any(|available| available.eq_ignore_ascii_case(&entry.model))
-            });
-            if defaults.is_empty() {
-                return Vec::new();
-            }
-            return defaults;
         }
 
         normalized_entries
@@ -23767,8 +23760,10 @@ Have we met every part of this goal and is there no further work to do?"#
         let mut updated = false;
         if !self.config.model.eq_ignore_ascii_case(trimmed) {
             self.config.model = trimmed.to_string();
-            let family = find_family_for_model(&self.config.model)
-                .unwrap_or_else(|| derive_default_model_family(&self.config.model));
+            let family = if code_core::modern_models::modern_model(&self.config.model).is_some()
+                && !(self.config.model_provider_id == "openai" && self.config.model_provider.uses_official_openai_model_catalog())
+            { code_core::model_family::derive_provider_model_family(&self.config.model) }
+            else { find_family_for_model(&self.config.model).unwrap_or_else(|| derive_default_model_family(&self.config.model)) };
             self.config.model_family = family;
             updated = true;
         }
@@ -25621,6 +25616,8 @@ Have we met every part of this goal and is there no further work to do?"#
 
     fn format_reasoning_effort(effort: ReasoningEffort) -> &'static str {
         match effort {
+            ReasoningEffort::Disabled => "None",
+            ReasoningEffort::Max => "Max",
             ReasoningEffort::Minimal | ReasoningEffort::None => "Minimal",
             ReasoningEffort::Low => "Low",
             ReasoningEffort::Medium => "Medium",
@@ -30958,6 +30955,17 @@ impl Drop for AutoReviewStubGuard {
 #[cfg(test)]
     mod tests {
         use super::*;
+        #[test]
+        fn routing_preserves_unavailable_models_and_max_effort() {
+            let entries = ChatWidget::sanitize_auto_drive_routing_entries(vec![AutoDriveModelRoutingEntry {
+                model: "gpt-6-unavailable".into(), enabled: true,
+                reasoning_levels: vec![ReasoningEffort::Max], description: String::new(),
+            }], &["gpt-6.1-sol".into()]);
+            assert_eq!(entries[0].model, "gpt-6-unavailable");
+            assert_eq!(entries[0].reasoning_levels, vec![ReasoningEffort::Max]);
+            assert!(ChatWidget::sanitize_auto_drive_routing_entries(vec![], &[]).is_empty());
+        }
+
         use super::{
             CAPTURE_AUTO_TURN_COMMIT_STUB,
             GIT_DIFF_NAME_ONLY_BETWEEN_STUB,
@@ -31570,6 +31578,23 @@ use code_core::protocol::OrderMeta;
 
         assert_eq!(reloaded.active_profile.as_deref(), Some("work"));
         assert_eq!(reloaded.service_tier, None);
+    }
+
+    #[test]
+    fn priority_model_selection_preserves_exact_id_and_oauth_limits() {
+        let _runtime_guard = enter_test_runtime_guard();
+        let mut harness = ChatWidgetHarness::new();
+        let chat = harness.chat();
+        chat.config.using_chatgpt_auth = true;
+        chat.config.model_provider_id = "openai".into();
+        chat.config.model_provider.base_url = None;
+        chat.handle_model_command("gpt-6.1-sol".into());
+        assert_eq!(chat.config.model, "gpt-6.1-sol");
+        assert_eq!(chat.config.model_context_window, Some(872_000));
+        assert_eq!(chat.config.model_auto_compact_token_limit, Some(784_800));
+        chat.apply_session_context_mode_selection(Some(ContextMode::OneM));
+        assert_eq!(chat.config.model_context_window, Some(872_000));
+        assert_eq!(chat.config.model_auto_compact_token_limit, Some(784_800));
     }
 
     #[test]

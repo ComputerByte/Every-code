@@ -2239,6 +2239,8 @@ fn map_reasoning_effort_to_wire(
         code_core::config_types::ReasoningEffort::Minimal => {
             code_protocol::config_types::ReasoningEffort::Minimal
         }
+        code_core::config_types::ReasoningEffort::Disabled => code_protocol::config_types::ReasoningEffort::None,
+        code_core::config_types::ReasoningEffort::Max => code_protocol::config_types::ReasoningEffort::Max,
         code_core::config_types::ReasoningEffort::Low => code_protocol::config_types::ReasoningEffort::Low,
         code_core::config_types::ReasoningEffort::Medium => {
             code_protocol::config_types::ReasoningEffort::Medium

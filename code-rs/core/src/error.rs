@@ -505,3 +505,14 @@ mod tests {
         );
     }
 }
+
+/// Reject invalid requests before outer turn retries or transport fallback.
+pub(crate) fn non_retryable_model_error(error: &CodexErr) -> bool {
+    match error {
+        CodexErr::UnexpectedStatus(error) => error.status.is_client_error()
+            && error.status != reqwest::StatusCode::TOO_MANY_REQUESTS,
+        CodexErr::RetryLimit(error) => !error.retryable,
+        CodexErr::UnsupportedOperation(_) | CodexErr::AuthRefreshPermanent(_) => true,
+        _ => false,
+    }
+}

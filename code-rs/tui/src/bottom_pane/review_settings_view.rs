@@ -319,6 +319,8 @@ impl ReviewSettingsView {
             ReasoningEffort::Medium => "Medium",
             ReasoningEffort::Low => "Low",
             ReasoningEffort::Minimal => "Minimal",
+            ReasoningEffort::Max => "Max",
+            ReasoningEffort::Disabled => "None",
             ReasoningEffort::None => "None",
         }
     }

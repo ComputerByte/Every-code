@@ -1,0 +1,2520 @@
+{
+  "scope": "tracked runtime, read-only codex-rs mirror, JS/scripts, tests, configurations, prompts and docs; literal candidates include fixtures and non-model references and are not availability claims",
+  "models_by_file": {
+    ".github/ISSUE_TEMPLATE/3-cli.yml": [
+      "gpt-5",
+      "o3"
+    ],
+    ".github/codex/home/config.toml": [
+      "gpt-5.1"
+    ],
+    ".github/workflows/issue-triage.yml": [
+      "gpt-4o-mini",
+      "gpt-5"
+    ],
+    "CHANGELOG.md": [
+      "GPT-5",
+      "GPT-5.4",
+      "GPT-5.5",
+      "GPT-5.6",
+      "GPT-5.6-Terra",
+      "GPT-6-Astra",
+      "QWEN_MODEL",
+      "Qwen-coder",
+      "claude-sonnet-4.5",
+      "gemini-3-flash",
+      "gemini-3-pro",
+      "gpt-5-codex-mini",
+      "gpt-5.1",
+      "gpt-5.1-codex-max",
+      "gpt-5.2",
+      "gpt-5.2-codex",
+      "gpt-5.3",
+      "gpt-5.3-codex",
+      "gpt-5.3-codex-spark",
+      "gpt-5.4-mini"
+    ],
+    "README.md": [
+      "GPT-5",
+      "claude-code",
+      "claude-opus-4.8",
+      "claude-sonnet-4.6",
+      "gemini-cli",
+      "gpt-5",
+      "gpt-5.1",
+      "gpt-5.4",
+      "gpt-5.4-mini",
+      "gpt-5.5",
+      "qwen-code"
+    ],
+    "code-rs/app-server-protocol/schema/json/codex_app_server_protocol.schemas.json": [
+      "GPT-5"
+    ],
+    "code-rs/app-server-protocol/schema/json/v1/GetUserSavedConfigResponse.json": [
+      "GPT-5"
+    ],
+    "code-rs/app-server-protocol/schema/json/v2/ConfigReadResponse.json": [
+      "GPT-5"
+    ],
+    "code-rs/app-server-protocol/schema/typescript/Verbosity.ts": [
+      "GPT-5"
+    ],
+    "code-rs/app-server-protocol/src/protocol/common.rs": [
+      "gpt-5.1-codex-max"
+    ],
+    "code-rs/app-server/src/message_processor.rs": [
+      "o3"
+    ],
+    "code-rs/apply-patch/src/lib.rs": [
+      "gpt-4.1"
+    ],
+    "code-rs/apply-patch/src/parser.rs": [
+      "GPT-4.1",
+      "gpt-4.1."
+    ],
+    "code-rs/arg0/src/lib.rs": [
+      "QWEN_API_KEY"
+    ],
+    "code-rs/cli/src/llm.rs": [
+      "gpt-4.1",
+      "gpt-5.1"
+    ],
+    "code-rs/cli/src/main.rs": [
+      "gpt-5.1-test"
+    ],
+    "code-rs/code-auto-drive-core/src/auto_coordinator.rs": [
+      "gpt-5.1",
+      "gpt-5.1-codex-max",
+      "gpt-5.3-codex",
+      "gpt-5.3-codex-experimental",
+      "gpt-5.3-codex-spark",
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-6.1-sol"
+    ],
+    "code-rs/code-version/src/lib.rs": [
+      "GPT-6.1",
+      "gpt-5.4",
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-6-astra",
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "gpt-6.1-sol"
+    ],
+    "code-rs/common/src/config_override.rs": [
+      "o3"
+    ],
+    "code-rs/common/src/model_presets.rs": [
+      "GPT-5",
+      "GPT-5.5",
+      "GPT-5.6",
+      "gpt-5",
+      "gpt-5-codex",
+      "gpt-5-codex-mini",
+      "gpt-5.1",
+      "gpt-5.1-codex",
+      "gpt-5.1-codex-max",
+      "gpt-5.1-codex-mini",
+      "gpt-5.2",
+      "gpt-5.2-codex",
+      "gpt-5.3-codex",
+      "gpt-5.3-codex-spark",
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-5.6-terra"
+    ],
+    "code-rs/config.md": [
+      "QWEN_API_KEY",
+      "gpt-3.5-turbo",
+      "gpt-4o",
+      "gpt-5.1",
+      "o3",
+      "o4-mini"
+    ],
+    "code-rs/core/gpt-5.1-codex-max_prompt.md": [
+      "GPT-5."
+    ],
+    "code-rs/core/gpt-5.2-codex_prompt.md": [
+      "GPT-5."
+    ],
+    "code-rs/core/gpt_5_1_prompt.md": [
+      "GPT-5.1"
+    ],
+    "code-rs/core/gpt_5_2_prompt.md": [
+      "GPT-5.2"
+    ],
+    "code-rs/core/gpt_5_codex_prompt.md": [
+      "GPT-5."
+    ],
+    "code-rs/core/prompt_coder.md": [
+      "claude-sonnet-4.6",
+      "gemini-3.5-flash",
+      "gpt-5.5"
+    ],
+    "code-rs/core/src/agent_defaults.rs": [
+      "Gemini 3.1 Pro (High)",
+      "QWEN_3_CODER_READ_ONLY",
+      "QWEN_3_CODER_WRITE",
+      "claude-haiku",
+      "claude-haiku-4-5-20251001",
+      "claude-haiku-4.5",
+      "claude-haiku-5-5",
+      "claude-haiku-5.5",
+      "claude-opus",
+      "claude-opus-4-5-20251101",
+      "claude-opus-4-6",
+      "claude-opus-4-7",
+      "claude-opus-4-8",
+      "claude-opus-4.5",
+      "claude-opus-4.6",
+      "claude-opus-4.7",
+      "claude-opus-4.8",
+      "claude-opus-5-5",
+      "claude-opus-5.5",
+      "claude-sonnet",
+      "claude-sonnet-4-5-20250929",
+      "claude-sonnet-4-6",
+      "claude-sonnet-4.5",
+      "claude-sonnet-4.6",
+      "claude-sonnet-5-5",
+      "claude-sonnet-5.5",
+      "gemini-2.5-flash",
+      "gemini-2.5-pro",
+      "gemini-3",
+      "gemini-3-flash",
+      "gemini-3-flash-preview",
+      "gemini-3-pro",
+      "gemini-3-pro-preview",
+      "gemini-3.1-pro",
+      "gemini-3.5-flash",
+      "gemini-flash",
+      "gemini-pro",
+      "gpt-5",
+      "gpt-5-codex",
+      "gpt-5-codex-mini",
+      "gpt-5.1",
+      "gpt-5.1-codex",
+      "gpt-5.1-codex-max",
+      "gpt-5.1-codex-mini",
+      "gpt-5.2",
+      "gpt-5.2-codex",
+      "gpt-5.3-codex",
+      "gpt-5.3-codex-spark",
+      "gpt-5.3-spark",
+      "gpt-5.4",
+      "gpt-5.4-mini",
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-6-terra",
+      "gpt-6.1-sol",
+      "qwen-3-coder",
+      "qwen3-coder-plus",
+      "qwen_uses_dashscope_model_id"
+    ],
+    "code-rs/core/src/agent_tool.rs": [
+      "QWEN_API_KEY",
+      "QWEN_BASE_URL",
+      "claude-haiku-5-5",
+      "claude-opus-5-5",
+      "claude-sonnet-4.6",
+      "claude-sonnet-5-5",
+      "gemini-3.5-flash",
+      "gpt-5.3-codex",
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "gpt-6.1-sol",
+      "qwen_base",
+      "qwen_key"
+    ],
+    "code-rs/core/src/chat_completions.rs": [
+      "gpt-4.1",
+      "kimi-k2"
+    ],
+    "code-rs/core/src/client.rs": [
+      "GPT-5",
+      "gpt-5",
+      "gpt-5.1",
+      "gpt-5.1-codex-max",
+      "gpt-5.1.",
+      "gpt-5.3-codex-spark",
+      "gpt-5.6",
+      "gpt-6",
+      "gpt-test"
+    ],
+    "code-rs/core/src/client_common.rs": [
+      "gpt-3.5",
+      "gpt-4.1",
+      "gpt-4o",
+      "gpt-5.1",
+      "gpt-5.1-codex",
+      "gpt-5.3-codex",
+      "gpt-5.3-codex-spark",
+      "gpt-oss"
+    ],
+    "code-rs/core/src/codex/streaming.rs": [
+      "claude-opus-4.6",
+      "gpt-4.1",
+      "gpt-4.1-",
+      "gpt-5.2-codex",
+      "gpt-5.3-codex",
+      "gpt-5.3-codex-spark",
+      "gpt-5.4",
+      "gpt-5.4-2026-04-01",
+      "o3"
+    ],
+    "code-rs/core/src/config.rs": [
+      "GPT-5.3-CODEX",
+      "GPT-5.3-CODEX-EXPERIMENTAL",
+      "claude-opus-4.6",
+      "claude-opus-4.8",
+      "claude-sonnet-4.5",
+      "claude-sonnet-4.6",
+      "gemini-2.5-pro",
+      "gemini-3-flash",
+      "gemini-3.1-pro",
+      "gemini-3.5-flash",
+      "gpt-3.5-turbo",
+      "gpt-4",
+      "gpt-4.1",
+      "gpt-5",
+      "gpt-5-codex",
+      "gpt-5.1",
+      "gpt-5.1-codex",
+      "gpt-5.1-codex-max",
+      "gpt-5.2",
+      "gpt-5.2-codex",
+      "gpt-5.2.4",
+      "gpt-5.3-codex",
+      "gpt-5.4",
+      "gpt-5.4-mini",
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-5.6-terra",
+      "gpt-6-astra",
+      "gpt-6.1-sol",
+      "o3",
+      "o4-high",
+      "o4-mini",
+      "qwen-3-coder"
+    ],
+    "code-rs/core/src/config/validation.rs": [
+      "claude-opus-4.1",
+      "claude-opus-4.5",
+      "claude-opus-4.6",
+      "claude-opus-4.7",
+      "claude-opus-4.8",
+      "claude-sonnet-4.5",
+      "claude-sonnet-4.6",
+      "gemini-2.5-flash",
+      "gemini-2.5-pro",
+      "gemini-3-flash",
+      "gemini-3-flash-preview",
+      "gemini-3-pro",
+      "gemini-3-pro-preview",
+      "gemini-3.1-pro",
+      "gemini-3.5-flash",
+      "gpt-4.1",
+      "gpt-4.1-2024-04-09",
+      "gpt-4.1-mini",
+      "gpt-4.1-mini-2024-04-09",
+      "gpt-4.1-nano",
+      "gpt-4.1-nano-2024-04-09",
+      "gpt-5",
+      "gpt-5-codex",
+      "gpt-5.",
+      "gpt-5.1",
+      "gpt-5.1-codex",
+      "gpt-5.1-codex-max",
+      "gpt-5.2",
+      "gpt-5.2.4",
+      "gpt-5.4",
+      "gpt-5.6-terra"
+    ],
+    "code-rs/core/src/config_edit.rs": [
+      "gpt-4",
+      "gpt-5.1-codex",
+      "o3",
+      "o4-mini"
+    ],
+    "code-rs/core/src/config_types.rs": [
+      "gpt-4",
+      "gpt-5",
+      "gpt-5-mini",
+      "gpt-5.1",
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-6.1-sol"
+    ],
+    "code-rs/core/src/default_client.rs": [
+      "gpt-5.5"
+    ],
+    "code-rs/core/src/external_agent_config.rs": [
+      "claude-code"
+    ],
+    "code-rs/core/src/memories/mod.rs": [
+      "gpt-5.1-codex-mini",
+      "gpt-5.3-codex"
+    ],
+    "code-rs/core/src/model_family.rs": [
+      "GPT-5.",
+      "Qwen3-Coder-30B-A3B-Instruct-Q4_K_M",
+      "gpt-3.5",
+      "gpt-4.1",
+      "gpt-4.1-2025-04-14",
+      "gpt-4o",
+      "gpt-5",
+      "gpt-5-codex",
+      "gpt-5.1",
+      "gpt-5.1-codex",
+      "gpt-5.1-codex-max",
+      "gpt-5.1-codex-max.",
+      "gpt-5.1-codex-max_prompt.md",
+      "gpt-5.2",
+      "gpt-5.2-codex",
+      "gpt-5.2-codex.",
+      "gpt-5.2-codex_prompt.md",
+      "gpt-5.3",
+      "gpt-5.3-codex",
+      "gpt-5.4",
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-6.1-sol",
+      "gpt-oss",
+      "o3",
+      "o4-mini",
+      "qwen3-coder-30b-a3b-instruct",
+      "qwen3_coder_30b_quantized_slug_has_explicit_local_metadata"
+    ],
+    "code-rs/core/src/model_provider_info.rs": [
+      "gpt-oss"
+    ],
+    "code-rs/core/src/openai_tools.rs": [
+      "gpt-5.4",
+      "o3"
+    ],
+    "code-rs/core/src/reasoning.rs": [
+      "gpt-5",
+      "gpt-5-codex",
+      "gpt-5-codex-mini",
+      "gpt-5.1",
+      "gpt-5.1-codex",
+      "gpt-5.1-codex-max",
+      "gpt-5.1-codex-mini",
+      "gpt-5.2",
+      "gpt-5.3",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-6-astra",
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "gpt-6.1-sol"
+    ],
+    "code-rs/core/src/remote_models/mod.rs": [
+      "gpt-5.3-codex",
+      "gpt-5.4",
+      "gpt-6.1-sol"
+    ],
+    "code-rs/core/src/slash_commands.rs": [
+      "claude-sonnet-4.5",
+      "claude-sonnet-5-5",
+      "gemini-3-flash",
+      "gpt-5.1-codex-max",
+      "gpt-5.5",
+      "gpt-5.6-terra",
+      "qwen-3-coder"
+    ],
+    "code-rs/core/src/tool_apply_patch.rs": [
+      "GPT-5",
+      "gpt-oss"
+    ],
+    "code-rs/core/templates/model_instructions/gpt-5.2-codex_instructions_template.md": [
+      "GPT-5."
+    ],
+    "code-rs/core/tests/agent_completion_wake.rs": [
+      "gpt-5.1-codex"
+    ],
+    "code-rs/core/tests/gemini_model_args.rs": [
+      "gemini-2.5-flash",
+      "gemini-2.5-pro",
+      "gemini-3.1-pro",
+      "gemini-3.5-flash"
+    ],
+    "code-rs/core/tests/remote_models_manager.rs": [
+      "gpt-5.2"
+    ],
+    "code-rs/core/tests/repeated_tool_loop.rs": [
+      "gpt-5.1-codex"
+    ],
+    "code-rs/core/tests/tool_hooks.rs": [
+      "gpt-5.1-codex"
+    ],
+    "code-rs/core/tests/tool_selection.rs": [
+      "gpt-5-codex",
+      "gpt-5.1",
+      "gpt-5.1-codex",
+      "o3"
+    ],
+    "code-rs/docs/codex_mcp_interface.md": [
+      "gpt-5.1",
+      "gpt-5.1-codex",
+      "o3"
+    ],
+    "code-rs/exec/src/lib.rs": [
+      "gpt-5.2",
+      "gpt-oss"
+    ],
+    "code-rs/mcp-server/src/code_tool_config.rs": [
+      "o3",
+      "o4-mini"
+    ],
+    "code-rs/mcp-server/src/outgoing_message.rs": [
+      "gpt-4o"
+    ],
+    "code-rs/mcp-types/schema/2025-03-26/schema.json": [
+      "claude-3-5-sonnet",
+      "claude-3-5-sonnet-20241022",
+      "claude-3-haiku-20240307",
+      "claude-3-sonnet-20240229",
+      "gemini-1.5-flash"
+    ],
+    "code-rs/mcp-types/schema/2025-06-18/schema.json": [
+      "claude-3-5-sonnet",
+      "claude-3-5-sonnet-20241022",
+      "claude-3-haiku-20240307",
+      "claude-3-sonnet-20240229",
+      "gemini-1.5-flash"
+    ],
+    "code-rs/ollama/src/client.rs": [
+      "llama3.2"
+    ],
+    "code-rs/ollama/src/lib.rs": [
+      "gpt-oss"
+    ],
+    "code-rs/protocol/src/config_types.rs": [
+      "GPT-5",
+      "gpt-5.2-codex"
+    ],
+    "code-rs/protocol/src/mcp_protocol.rs": [
+      "gpt-5.1-codex",
+      "o3",
+      "o4-mini"
+    ],
+    "code-rs/protocol/src/openai_models.rs": [
+      "gpt-5"
+    ],
+    "code-rs/tui/src/agent_install_helpers.rs": [
+      "claude-code",
+      "gemini-cli",
+      "qwen-code"
+    ],
+    "code-rs/tui/src/bottom_pane/auto_drive_settings_view.rs": [
+      "gpt-5.5",
+      "gpt-5.6-luna"
+    ],
+    "code-rs/tui/src/bottom_pane/model_selection_view.rs": [
+      "GPT-5.3-Codex",
+      "GPT-5.4",
+      "gpt-5.1",
+      "gpt-5.1-codex",
+      "gpt-5.1-codex-max",
+      "gpt-5.1-codex-mini",
+      "gpt-5.2",
+      "gpt-5.2-codex",
+      "gpt-5.3-codex",
+      "gpt-5.3-codex-spark",
+      "gpt-5.4",
+      "gpt-5.4-mini",
+      "gpt-5.5"
+    ],
+    "code-rs/tui/src/chatwidget.rs": [
+      "GPT-4",
+      "GPT-5.1-Codex-Mini",
+      "GPT-5.5",
+      "GPT-5.6",
+      "claude-code",
+      "claude-sonnet-4.6",
+      "gemini-3.1-pro",
+      "gemini-cli",
+      "gpt-3.5",
+      "gpt-4",
+      "gpt-4.5",
+      "gpt-5.1-codex",
+      "gpt-5.1-codex-max",
+      "gpt-5.1-codex-mini",
+      "gpt-5.1-large",
+      "gpt-5.2",
+      "gpt-5.3-codex",
+      "gpt-5.3-codex-spark",
+      "gpt-5.4",
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-6-astra",
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "gpt-6.1-sol",
+      "o3",
+      "qwen-3-coder",
+      "qwen-code"
+    ],
+    "code-rs/tui/src/chatwidget/agent_summary.rs": [
+      "gpt-5.2-codex",
+      "gpt-5.3-codex",
+      "gpt-5.4"
+    ],
+    "code-rs/tui/src/lib.rs": [
+      "gpt-5.1-codex",
+      "gpt-5.2-codex",
+      "gpt-oss"
+    ],
+    "code-rs/tui/src/model_migration.rs": [
+      "GPT-5.2",
+      "GPT-5.3",
+      "gpt-5",
+      "gpt-5-1",
+      "gpt-5-1-codex-max",
+      "gpt-5-2",
+      "gpt-5.1",
+      "gpt-5.1-codex",
+      "gpt-5.1-codex-max",
+      "gpt-5.1-codex-mini.",
+      "gpt-5.3-codex."
+    ],
+    "code-rs/tui/src/onboarding/auth.rs": [
+      "gpt-5.1"
+    ],
+    "code-rs/tui/src/remote_model_presets.rs": [
+      "gpt-5.1-codex",
+      "gpt-5.2",
+      "gpt-5.2-codex",
+      "gpt-5.3-codex",
+      "gpt-5.3-codex-spark",
+      "gpt-5.4",
+      "gpt-5.5"
+    ],
+    "code-rs/tui/tests/ui_smoke.rs": [
+      "gpt-5.1-codex"
+    ],
+    "code-rs/tui/tests/vt100_chatwidget_snapshot.rs": [
+      "claude-3-opus",
+      "claude-opus-4.8",
+      "gpt-4o"
+    ],
+    "codex-cli/.pack/package/README.md": [
+      "GPT-5",
+      "claude-code",
+      "gemini-cli",
+      "gpt-5",
+      "gpt-5.1",
+      "qwen-code"
+    ],
+    "codex-rs/analytics/src/client_tests.rs": [
+      "gpt-5",
+      "gpt-5.1-codex"
+    ],
+    "codex-rs/analytics/src/tests/suite/approvals_tests.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/analytics/src/tests/suite/apps_tests.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/analytics/src/tests/suite/hooks_tests.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/analytics/src/tests/suite/plugins_tests.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/analytics/src/tests/suite/skills_tests.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/analytics/src/tests/suite/threads_tests.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/analytics/src/tests/suite/tools_tests.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/analytics/src/tests/suite/turns/accepted_lines_tests.rs": [
+      "gpt-5",
+      "gpt-5.1-codex"
+    ],
+    "codex-rs/analytics/src/tests/suite/turns/compaction_tests.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/analytics/src/tests/suite/turns/events_tests.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/analytics/src/tests/suite/turns/requests_tests.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/analytics/src/tests/support.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/app-server-protocol/schema/json/codex_app_server_protocol.schemas.json": [
+      "GPT-5"
+    ],
+    "codex-rs/app-server-protocol/schema/json/codex_app_server_protocol.v2.schemas.json": [
+      "GPT-5"
+    ],
+    "codex-rs/app-server-protocol/schema/json/v2/ConfigReadResponse.json": [
+      "GPT-5"
+    ],
+    "codex-rs/app-server-protocol/schema/typescript/Verbosity.ts": [
+      "GPT-5"
+    ],
+    "codex-rs/app-server-protocol/src/protocol/common.rs": [
+      "gpt-5",
+      "gpt-5.4"
+    ],
+    "codex-rs/app-server-protocol/src/protocol/thread_history.rs": [
+      "gpt-5.4-mini"
+    ],
+    "codex-rs/app-server-protocol/src/protocol/v2/tests.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/app-server-test-client/src/lib.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/app-server/src/config_manager_service_tests.rs": [
+      "gpt-5.2",
+      "gpt-main",
+      "gpt-new",
+      "gpt-work"
+    ],
+    "codex-rs/app-server/src/main_tests.rs": [
+      "gpt-5-codex"
+    ],
+    "codex-rs/app-server/src/outgoing_message.rs": [
+      "gpt-5.2",
+      "gpt-5.3-codex"
+    ],
+    "codex-rs/app-server/src/request_processors/config_processor.rs": [
+      "gpt-managed",
+      "gpt-protected"
+    ],
+    "codex-rs/app-server/src/request_processors/persisted_resume_settings_tests.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/app-server/src/request_processors/thread_processor_tests.rs": [
+      "gpt-5",
+      "gpt-5.1-codex-max",
+      "gpt-5.2-codex"
+    ],
+    "codex-rs/app-server/src/turn_cost_worker_tests.rs": [
+      "gpt-5.6"
+    ],
+    "codex-rs/app-server/tests/suite/v2/account.rs": [
+      "gpt-5.6-sol",
+      "gpt-5.6-terra"
+    ],
+    "codex-rs/app-server/tests/suite/v2/account_thread_usage.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/app-server/tests/suite/v2/analytics.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/app-server/tests/suite/v2/config_rpc.rs": [
+      "gpt-5.3-spark",
+      "gpt-5.5",
+      "gpt-existing",
+      "gpt-managed",
+      "gpt-new",
+      "gpt-old",
+      "gpt-protected",
+      "gpt-sensitive",
+      "gpt-system",
+      "gpt-test",
+      "gpt-user"
+    ],
+    "codex-rs/app-server/tests/suite/v2/cyber_access_program.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/app-server/tests/suite/v2/daemon_update_recovery.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/app-server/tests/suite/v2/executor_mcp.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/app-server/tests/suite/v2/external_agent_config.rs": [
+      "claude-code",
+      "claude-code-sessions",
+      "gpt-5.4",
+      "gpt-concurrent"
+    ],
+    "codex-rs/app-server/tests/suite/v2/guardian_v2.rs": [
+      "gpt-5.6-luna"
+    ],
+    "codex-rs/app-server/tests/suite/v2/guardian_v2_history_tests.rs": [
+      "gpt-5.6-luna"
+    ],
+    "codex-rs/app-server/tests/suite/v2/imagegen_extension.rs": [
+      "gpt-image-2"
+    ],
+    "codex-rs/app-server/tests/suite/v2/mcp_resource.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/app-server/tests/suite/v2/mcp_resource/plugin_metadata_refresh.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/app-server/tests/suite/v2/multi_agent_v2_developer_instructions.rs": [
+      "gpt-5.4",
+      "gpt-5.5"
+    ],
+    "codex-rs/app-server/tests/suite/v2/plugin_list.rs": [
+      "claude-plugin"
+    ],
+    "codex-rs/app-server/tests/suite/v2/realtime_conversation.rs": [
+      "gpt-4o-mini-transcribe",
+      "gpt-live-1-codex",
+      "gpt-realtime-1.5"
+    ],
+    "codex-rs/app-server/tests/suite/v2/request_permissions.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/app-server/tests/suite/v2/residency.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/app-server/tests/suite/v2/safety_check_downgrade.rs": [
+      "gpt-5.3-codex",
+      "gpt-5.5"
+    ],
+    "codex-rs/app-server/tests/suite/v2/skills_list.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/app-server/tests/suite/v2/thread_archive.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/app-server/tests/suite/v2/thread_goal_empty_responses.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/app-server/tests/suite/v2/thread_list.rs": [
+      "gpt-5.2",
+      "gpt-5.4"
+    ],
+    "codex-rs/app-server/tests/suite/v2/thread_loaded_list.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/app-server/tests/suite/v2/thread_metadata_update.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/app-server/tests/suite/v2/thread_queue.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/app-server/tests/suite/v2/thread_resume.rs": [
+      "gpt-5.2-codex",
+      "gpt-5.4"
+    ],
+    "codex-rs/app-server/tests/suite/v2/thread_start.rs": [
+      "gpt-5.2",
+      "gpt-5.4-mini",
+      "gpt-5.5",
+      "gpt-5.6-sol",
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "gpt-6.1-sol"
+    ],
+    "codex-rs/app-server/tests/suite/v2/turn_settings_update.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/app-server/tests/suite/v2/turn_start.rs": [
+      "gpt-5.4",
+      "gpt-5.5"
+    ],
+    "codex-rs/app-server/tests/suite/v2/view_image.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/apply-patch/src/parser.rs": [
+      "GPT-4.1",
+      "gpt-4.1."
+    ],
+    "codex-rs/aws-auth/src/lib.rs": [
+      "gpt-oss-120b-1"
+    ],
+    "codex-rs/backend-client/src/client/chatgpt_turn_cost_tests.rs": [
+      "gpt-5.6"
+    ],
+    "codex-rs/backend-client/src/client/task_usage_tests.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/backend-client/src/client/thread_usage_tests.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/backend-client/src/client/turn_usage.rs": [
+      "gpt-5.6"
+    ],
+    "codex-rs/cli/src/doctor.rs": [
+      "llama3.2"
+    ],
+    "codex-rs/cli/src/doctor/output.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/cli/src/main.rs": [
+      "gpt-5.1-test"
+    ],
+    "codex-rs/cli/tests/app_server.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/cli/tests/daemon_startup.rs": [
+      "GPT-5.6-Terra",
+      "gpt-5.6-terra",
+      "gpt-6-sol"
+    ],
+    "codex-rs/cli/tests/login.rs": [
+      "gpt-5.6-sol"
+    ],
+    "codex-rs/cli/tests/mcp_add_remove.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/cloud-config/src/cache_tests.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/cloud-config/src/service_tests.rs": [
+      "gpt-5",
+      "gpt-5-refreshed"
+    ],
+    "codex-rs/codex-api/src/endpoint/images.rs": [
+      "gpt-image-1.5",
+      "gpt-image-2"
+    ],
+    "codex-rs/codex-api/src/endpoint/memories.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/codex-api/src/endpoint/models.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/codex-api/src/endpoint/realtime_call.rs": [
+      "gpt-realtime"
+    ],
+    "codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs": [
+      "gpt-4o-mini-transcribe"
+    ],
+    "codex-rs/codex-api/src/endpoint/realtime_websocket/methods_frameless_bidi_tests.rs": [
+      "gpt-live"
+    ],
+    "codex-rs/codex-api/src/endpoint/realtime_websocket/methods_v2.rs": [
+      "gpt-4o-mini-transcribe"
+    ],
+    "codex-rs/codex-api/src/endpoint/responses_websocket.rs": [
+      "gpt-fast-header",
+      "gpt-fast-wire",
+      "gpt-test"
+    ],
+    "codex-rs/codex-api/src/endpoint/search.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/codex-api/src/files.rs": [
+      "gpt-work"
+    ],
+    "codex-rs/codex-api/src/rate_limits.rs": [
+      "gpt-5.2-codex-sonic"
+    ],
+    "codex-rs/codex-api/src/sse/responses.rs": [
+      "gpt-5.1",
+      "gpt-5.3-codex",
+      "gpt-fast-header",
+      "gpt-fast-wire"
+    ],
+    "codex-rs/codex-api/src/sse/responses_error_parser_tests.rs": [
+      "gpt-5.1"
+    ],
+    "codex-rs/codex-api/tests/clients.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/codex-api/tests/models_integration.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/config/src/config_toml.rs": [
+      "GPT-5"
+    ],
+    "codex-rs/config/src/loader/mod.rs": [
+      "gpt-1000"
+    ],
+    "codex-rs/config/src/loader/tests.rs": [
+      "gpt-dev",
+      "gpt-main",
+      "gpt-work",
+      "gpt-work-v2"
+    ],
+    "codex-rs/config/src/strict_config_tests.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/config/src/types.rs": [
+      "gpt-5.1-codex-max"
+    ],
+    "codex-rs/core-plugins/src/command_migration_tests.rs": [
+      "claude-code"
+    ],
+    "codex-rs/core-plugins/src/executor_provider_tests.rs": [
+      "claude-plugin"
+    ],
+    "codex-rs/core-plugins/src/manifest.rs": [
+      "claude-plugin"
+    ],
+    "codex-rs/core-plugins/src/marketplace.rs": [
+      "claude-plugin"
+    ],
+    "codex-rs/core-plugins/src/marketplace_tests.rs": [
+      "claude-plugin"
+    ],
+    "codex-rs/core-plugins/src/store_tests.rs": [
+      "claude-plugin"
+    ],
+    "codex-rs/core/config.schema.json": [
+      "GPT-5",
+      "gpt-5.1-codex-max"
+    ],
+    "codex-rs/core/gpt-5.1-codex-max_prompt.md": [
+      "GPT-5."
+    ],
+    "codex-rs/core/gpt-5.2-codex_prompt.md": [
+      "GPT-5."
+    ],
+    "codex-rs/core/gpt_5_1_prompt.md": [
+      "GPT-5.1"
+    ],
+    "codex-rs/core/gpt_5_2_prompt.md": [
+      "GPT-5.2"
+    ],
+    "codex-rs/core/gpt_5_codex_prompt.md": [
+      "GPT-5."
+    ],
+    "codex-rs/core/src/agent/control_tests.rs": [
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol"
+    ],
+    "codex-rs/core/src/agent/role_tests.rs": [
+      "gpt-5",
+      "gpt-5.4-mini"
+    ],
+    "codex-rs/core/src/client_common_tests.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/core/src/client_tests.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/core/src/compact_tests.rs": [
+      "gpt-5.2",
+      "gpt-5.3-codex"
+    ],
+    "codex-rs/core/src/config/config_loader_tests.rs": [
+      "gpt-4",
+      "gpt-5",
+      "gpt-main",
+      "gpt-work"
+    ],
+    "codex-rs/core/src/config/config_tests.rs": [
+      "gpt-3.5-turbo",
+      "gpt-4",
+      "gpt-4.1",
+      "gpt-5",
+      "gpt-5-mini",
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-5.6-terra",
+      "gpt-bar",
+      "gpt-foo",
+      "gpt-new",
+      "gpt-old",
+      "gpt-project-local",
+      "o3",
+      "o4-mini"
+    ],
+    "codex-rs/core/src/config/edit_tests.rs": [
+      "gpt-4o",
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-foo",
+      "o4-mini"
+    ],
+    "codex-rs/core/src/config/mod.rs": [
+      "GPT-5",
+      "gpt-5.5"
+    ],
+    "codex-rs/core/src/context/world_state/model_tests.rs": [
+      "gpt-new",
+      "gpt-old",
+      "gpt-test"
+    ],
+    "codex-rs/core/src/context_manager/history_tests.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/core/src/realtime_context_tests.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/core/src/realtime_conversation.rs": [
+      "gpt-live-1-codex",
+      "gpt-realtime-1.5"
+    ],
+    "codex-rs/core/src/session/mod.rs": [
+      "gpt-5.2",
+      "gpt-5.3-codex"
+    ],
+    "codex-rs/core/src/session/step_activation_tests.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/src/session/tests.rs": [
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-5.5"
+    ],
+    "codex-rs/core/src/session/turn_input_tests.rs": [
+      "gpt-5.2",
+      "gpt-5.4"
+    ],
+    "codex-rs/core/src/tasks/mod_tests.rs": [
+      "gpt-5.2",
+      "gpt-5.4"
+    ],
+    "codex-rs/core/src/tools/handlers/apply_patch_spec.rs": [
+      "GPT-5"
+    ],
+    "codex-rs/core/src/tools/handlers/multi_agents_tests.rs": [
+      "gpt-5-role-override",
+      "gpt-5.5"
+    ],
+    "codex-rs/core/src/tools/tool_dispatch_trace_tests.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/core/src/turn_metadata_tests.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/core/src/util.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/core/src/util_tests.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/core/templates/model_instructions/gpt-5.2-codex_instructions_template.md": [
+      "GPT-5."
+    ],
+    "codex-rs/core/tests/common/apps_test_server.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/common/streaming_sse.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/common/test_codex.rs": [
+      "gpt-5.1-codex",
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/remote_env_windows/remote_env_windows_test.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/core/tests/responses_headers.rs": [
+      "gpt-3.5-turbo",
+      "gpt-5.1-codex"
+    ],
+    "codex-rs/core/tests/suite/abort_tasks.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/agent_eviction_tests.rs": [
+      "gpt-5.6-sol"
+    ],
+    "codex-rs/core/tests/suite/agent_execution.rs": [
+      "gpt-5.6-sol"
+    ],
+    "codex-rs/core/tests/suite/agent_websocket.rs": [
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-5.6-sol"
+    ],
+    "codex-rs/core/tests/suite/app_tool_exposure.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/apply_patch_cli.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/approvals.rs": [
+      "gpt-5.4",
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/audio_truncation.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/auto_review.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/bedrock_multi_agent_tests.rs": [
+      "gpt-5.6-sol"
+    ],
+    "codex-rs/core/tests/suite/cli_stream.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/client.rs": [
+      "gpt-5.4",
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/client_websockets.rs": [
+      "gpt-5.2",
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/code_mode.rs": [
+      "gpt-5.1-codex",
+      "gpt-5.4",
+      "gpt-5.5",
+      "gpt-5.6-luna"
+    ],
+    "codex-rs/core/tests/suite/code_mode_elicitation.rs": [
+      "gpt-5.1-codex"
+    ],
+    "codex-rs/core/tests/suite/code_mode_model_messages.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/codex_apps_protocol.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/collaboration_instructions.rs": [
+      "gpt-5.4",
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/compact.rs": [
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-5.5",
+      "gpt-5.6"
+    ],
+    "codex-rs/core/tests/suite/compact_program_tests.rs": [
+      "gpt-5.5",
+      "gpt-5.6-cyber"
+    ],
+    "codex-rs/core/tests/suite/compact_resume_fork.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/context_annotations.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/current_time_reminder.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/cyber_access_program.rs": [
+      "gpt-5.1",
+      "gpt-5.6-sol"
+    ],
+    "codex-rs/core/tests/suite/cyber_exec_policy.rs": [
+      "gpt-5.2",
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/exec_policy.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/core/tests/suite/extension_sandbox.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/external_auth.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/git_enrichment.rs": [
+      "gpt-5.1-codex"
+    ],
+    "codex-rs/core/tests/suite/guardian_authorization.rs": [
+      "gpt-5.1-codex"
+    ],
+    "codex-rs/core/tests/suite/guardian_authorization_refresh.rs": [
+      "gpt-5.1-codex"
+    ],
+    "codex-rs/core/tests/suite/guardian_cached_score_tests.rs": [
+      "gpt-5.5",
+      "gpt-5.6-luna"
+    ],
+    "codex-rs/core/tests/suite/guardian_checkpoint_migration_tests.rs": [
+      "gpt-5.5",
+      "gpt-5.6-luna"
+    ],
+    "codex-rs/core/tests/suite/guardian_context_budget.rs": [
+      "gpt-5.5",
+      "gpt-5.6-luna"
+    ],
+    "codex-rs/core/tests/suite/guardian_environments_tests.rs": [
+      "gpt-5.5",
+      "gpt-5.6-luna"
+    ],
+    "codex-rs/core/tests/suite/guardian_history.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/guardian_mcp_elicitation.rs": [
+      "gpt-5.4",
+      "gpt-5.5",
+      "gpt-5.6-luna"
+    ],
+    "codex-rs/core/tests/suite/guardian_retained_context.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/guardian_review.rs": [
+      "gpt-5.4",
+      "gpt-5.5",
+      "gpt-5.6-luna"
+    ],
+    "codex-rs/core/tests/suite/guardian_review_cancellation.rs": [
+      "gpt-5.1-codex"
+    ],
+    "codex-rs/core/tests/suite/guardian_root_handoff.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/guardian_sender_messages_tests.rs": [
+      "gpt-5.5",
+      "gpt-5.6-luna"
+    ],
+    "codex-rs/core/tests/suite/guardian_subagent_notification_tests.rs": [
+      "gpt-5.1-codex"
+    ],
+    "codex-rs/core/tests/suite/hooks.rs": [
+      "gpt-5.1-codex",
+      "gpt-5.4",
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/injected_models_cache.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/interrupt_hooks.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/json_result.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/mcp_optional_startup_grace.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/mcp_tool_cache.rs": [
+      "gpt-5.4",
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/mcp_turn_metadata.rs": [
+      "gpt-5.4",
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/model_overrides.rs": [
+      "gpt-4o",
+      "o3"
+    ],
+    "codex-rs/core/tests/suite/model_request.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/core/tests/suite/model_switching.rs": [
+      "gpt-5.5",
+      "gpt-5.6-terra"
+    ],
+    "codex-rs/core/tests/suite/model_visible_layout.rs": [
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/models_cache_auth.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/models_cache_ttl.rs": [
+      "gpt-5.2",
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/models_etag_responses.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/core/tests/suite/multi_agent_mode.rs": [
+      "gpt-5.2",
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/multi_agent_resume.rs": [
+      "gpt-5.6-sol"
+    ],
+    "codex-rs/core/tests/suite/multi_agent_tool_descriptions.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/core/tests/suite/network_approval.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/otel.rs": [
+      "gpt-5.4",
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/override_updates.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/pending_input.rs": [
+      "gpt-5.1-codex",
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/personality.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/plugins.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/core/tests/suite/prompt_caching.rs": [
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-5.5",
+      "o3"
+    ],
+    "codex-rs/core/tests/suite/realtime_conversation.rs": [
+      "gpt-5.4",
+      "gpt-live-1-codex",
+      "gpt-realtime-1.5"
+    ],
+    "codex-rs/core/tests/suite/reasoning_effort_override.rs": [
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-5.5",
+      "gpt-6-astra"
+    ],
+    "codex-rs/core/tests/suite/remote_env.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/remote_models.rs": [
+      "gpt-5-remote",
+      "gpt-5.2",
+      "gpt-5.3",
+      "gpt-5.3-codex",
+      "gpt-5.3-codex-test",
+      "gpt-5.4",
+      "gpt-5.4-test",
+      "gpt-5.5",
+      "gpt-5.5-codex"
+    ],
+    "codex-rs/core/tests/suite/request_plugin_install.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/request_user_input_async.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/core/tests/suite/responses_lite.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/resume.rs": [
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/review.rs": [
+      "gpt-4.1",
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-5.6-sol"
+    ],
+    "codex-rs/core/tests/suite/rmcp_client.rs": [
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/safety_check_downgrade.rs": [
+      "gpt-5.2",
+      "gpt-5.3-codex",
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/scenarios.rs": [
+      "gpt-6-astra"
+    ],
+    "codex-rs/core/tests/suite/scenarios_agent_message_board.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/scenarios_content_filter.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/scenarios_guardian_agent_messages_tests.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/scenarios_guardian_conversation_history_tests.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/scenarios_guardian_extra_policy.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/scenarios_guardian_heartbeat.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/scenarios_indirect_namespace_prefixes.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/scenarios_mailbox_preemption_tests.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/scenarios_mcp_resource_messages.rs": [
+      "gpt-6-astra"
+    ],
+    "codex-rs/core/tests/suite/scenarios_skill_catalog_dedup.rs": [
+      "gpt-6-astra"
+    ],
+    "codex-rs/core/tests/suite/search_tool.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/settings_commits.rs": [
+      "gpt-5.2",
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/settings_constraints.rs": [
+      "gpt-5.2",
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/skills_extension.rs": [
+      "gpt-5.4",
+      "gpt-5.5",
+      "gpt-5.6-sol"
+    ],
+    "codex-rs/core/tests/suite/skills_extension/cloud_skill_tests.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/skills_extension/yielded_skill_tests.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/step_settings.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/step_settings_snapshots.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/subagent_notifications.rs": [
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra"
+    ],
+    "codex-rs/core/tests/suite/subagent_service_tier.rs": [
+      "gpt-5.6-sol"
+    ],
+    "codex-rs/core/tests/suite/token_budget.rs": [
+      "gpt-5.2",
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/tool_harness.rs": [
+      "gpt-5-codex"
+    ],
+    "codex-rs/core/tests/suite/tool_lifecycle.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/tool_observation_tests.rs": [
+      "gpt-5.1-codex"
+    ],
+    "codex-rs/core/tests/suite/tool_parallelism.rs": [
+      "gpt-5.1-codex",
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/tools.rs": [
+      "gpt-5-codex",
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/truncation.rs": [
+      "gpt-5.2",
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/turn_error_details_tests.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/turn_input_submission.rs": [
+      "gpt-5.4",
+      "gpt-5.6-sol"
+    ],
+    "codex-rs/core/tests/suite/unified_exec.rs": [
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/user_shell_cmd.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/core/tests/suite/view_image.rs": [
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-5.5"
+    ],
+    "codex-rs/core/tests/suite/web_search.rs": [
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-5.5",
+      "gpt-5.6-sol"
+    ],
+    "codex-rs/exec-server-protocol/src/protocol.rs": [
+      "claude-plugin"
+    ],
+    "codex-rs/exec-server/tests/capability_discovery.rs": [
+      "claude-plugin"
+    ],
+    "codex-rs/exec/src/cli_tests.rs": [
+      "gpt-5.2-codex"
+    ],
+    "codex-rs/exec/src/event_processor_with_human_output_tests.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/exec/src/lib_tests.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/exec/src/main_tests.rs": [
+      "gpt-5.2-codex"
+    ],
+    "codex-rs/exec/tests/event_processor_with_json_output.rs": [
+      "gpt-5",
+      "gpt-5-mini"
+    ],
+    "codex-rs/exec/tests/suite/output_schema.rs": [
+      "gpt-5.1"
+    ],
+    "codex-rs/exec/tests/suite/prompt_stdin.rs": [
+      "gpt-5.1"
+    ],
+    "codex-rs/exec/tests/suite/resume.rs": [
+      "gpt-5.1",
+      "gpt-5.1-high",
+      "gpt-5.2-codex"
+    ],
+    "codex-rs/ext/goal/tests/goal_extension_backend.rs": [
+      "gpt-5",
+      "gpt-test"
+    ],
+    "codex-rs/ext/guardian-reviewer/src/metrics.rs": [
+      "gpt-5.4",
+      "gpt-5.4_guardian"
+    ],
+    "codex-rs/ext/guardian-v2/src/async_scorer/budget_tests.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/ext/guardian-v2/src/async_scorer/extension_tests.rs": [
+      "gpt-5.5",
+      "gpt-5.6-luna"
+    ],
+    "codex-rs/ext/guardian-v2/src/async_scorer/sampler.rs": [
+      "gpt-5.6-luna"
+    ],
+    "codex-rs/ext/guardian-v2/src/async_scorer/sampler_tests.rs": [
+      "gpt-5.6-luna"
+    ],
+    "codex-rs/ext/guardian-v2/src/async_scorer/trusted_tools.rs": [
+      "claude-plugin"
+    ],
+    "codex-rs/ext/guardian-v2/src/sync_reviewer/lifecycle_tests.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/ext/history-notes/tests/history_notes_extension.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/ext/history-notes/tests/image_model_input.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/ext/image-generation/src/tests.rs": [
+      "gpt-image-2"
+    ],
+    "codex-rs/ext/image-generation/src/tool.rs": [
+      "gpt-image-2"
+    ],
+    "codex-rs/ext/mcp/src/cloud_plugin_tests.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/ext/mcp/src/plugin/provider_tests.rs": [
+      "claude-plugin"
+    ],
+    "codex-rs/ext/mcp/tests/plugin_mcp.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/ext/memories/src/tests.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/ext/skills/src/loader/environment_tests.rs": [
+      "claude-name",
+      "claude-plugin"
+    ],
+    "codex-rs/ext/skills/tests/executor_file_system_authority.rs": [
+      "claude-plugin"
+    ],
+    "codex-rs/ext/skills/tests/skills_extension.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/external-agent-migration/src/detect/sessions/connectors_cla.rs": [
+      "claude-code-sessions"
+    ],
+    "codex-rs/external-agent-migration/src/lib_tests.rs": [
+      "claude-code"
+    ],
+    "codex-rs/external-agent-migration/src/service_tests.rs": [
+      "CLAUDE-CODE",
+      "claude-plugin"
+    ],
+    "codex-rs/external-agent-migration/src/service_tests/plugins/basics.rs": [
+      "claude-code",
+      "claude-code-plugins"
+    ],
+    "codex-rs/external-agent-migration/src/source/cla.rs": [
+      "claude-code"
+    ],
+    "codex-rs/external-agent-migration/src/source_cla.rs": [
+      "claude-code",
+      "claude-code-plugins",
+      "claude-plugins-official"
+    ],
+    "codex-rs/features/src/lib.rs": [
+      "Claude-style"
+    ],
+    "codex-rs/feedback/src/lib.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/history/src/tests.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/hooks/src/engine/mod_tests.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/hooks/src/events/compact.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/hooks/src/events/post_tool_use.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/hooks/src/events/pre_tool_use.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/hooks/src/schema.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/lmstudio/src/client.rs": [
+      "gpt-oss-20b"
+    ],
+    "codex-rs/lmstudio/src/lib.rs": [
+      "gpt-oss-20b"
+    ],
+    "codex-rs/memories/write/src/prompts_tests.rs": [
+      "gpt-5.3-codex"
+    ],
+    "codex-rs/memories/write/src/startup_tests.rs": [
+      "gpt-5.4-mini"
+    ],
+    "codex-rs/model-provider-info/src/lib.rs": [
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-6-astra",
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "gpt-6.1-sol",
+      "gpt-oss"
+    ],
+    "codex-rs/model-provider/src/amazon_bedrock/catalog.rs": [
+      "GPT-5.5",
+      "GPT-5.6",
+      "GPT-6",
+      "GPT-6-Astra",
+      "GPT-6.1",
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-6-astra",
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "gpt-6.1-sol"
+    ],
+    "codex-rs/model-provider/src/amazon_bedrock/runtime_catalog_tests.rs": [
+      "GPT-5.6",
+      "GPT-6",
+      "GPT-6-Astra",
+      "GPT-6.1",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-6-astra",
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "gpt-6.1-sol"
+    ],
+    "codex-rs/model-provider/src/provider.rs": [
+      "GPT-5.5",
+      "GPT-5.6",
+      "GPT-6",
+      "GPT-6-Astra",
+      "GPT-6.1",
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-6-astra",
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "gpt-6.1-sol"
+    ],
+    "codex-rs/models-manager/models.json": [
+      "GPT-5.",
+      "GPT-5.5",
+      "GPT-5.6-Luna",
+      "GPT-5.6-Sol",
+      "GPT-5.6-Terra",
+      "GPT-6",
+      "GPT-6-Astra",
+      "GPT-6-Luna",
+      "GPT-6-Sol",
+      "GPT-6.",
+      "GPT-6.1",
+      "GPT-6.1-Sol",
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-6-astra",
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "gpt-6.1-sol",
+      "gpt-daybreak-blue-latest",
+      "gpt-daybreak-red-latest"
+    ],
+    "codex-rs/models-manager/src/manager.rs": [
+      "gpt-5.3-codex"
+    ],
+    "codex-rs/models-manager/src/manager_tests.rs": [
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-6-sol",
+      "gpt-6-sol-other",
+      "gpt-image",
+      "gpt-overlay",
+      "gpt-overlay-experiment"
+    ],
+    "codex-rs/models-manager/src/model_info_overrides_tests.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/network-proxy/src/network_policy.rs": [
+      "gpt-5.3-codex"
+    ],
+    "codex-rs/ollama/src/client.rs": [
+      "llama3.2"
+    ],
+    "codex-rs/ollama/src/lib.rs": [
+      "gpt-oss"
+    ],
+    "codex-rs/otel/README.md": [
+      "gpt-5.1"
+    ],
+    "codex-rs/otel/src/metrics/tags.rs": [
+      "gpt-5.1"
+    ],
+    "codex-rs/otel/tests/suite/manager_metrics.rs": [
+      "gpt-4o",
+      "gpt-5.1"
+    ],
+    "codex-rs/otel/tests/suite/otel_export_routing_policy.rs": [
+      "gpt-5.1"
+    ],
+    "codex-rs/otel/tests/suite/runtime_summary.rs": [
+      "gpt-5.1"
+    ],
+    "codex-rs/otel/tests/suite/send.rs": [
+      "gpt-5.1"
+    ],
+    "codex-rs/otel/tests/suite/snapshot.rs": [
+      "gpt-5.1",
+      "gpt-5.6"
+    ],
+    "codex-rs/protocol/src/config_types.rs": [
+      "GPT-5",
+      "gpt-5.2-codex"
+    ],
+    "codex-rs/protocol/src/error.rs": [
+      "gpt-reserve"
+    ],
+    "codex-rs/protocol/src/models.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/protocol/src/openai_models.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/protocol/src/protocol.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/responses-api-proxy/src/dump.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/rollout-trace/src/inference.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/rollout-trace/src/reducer/code_cell_tests.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/rollout-trace/src/reducer/conversation_tests.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/rollout-trace/src/reducer/test_support.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/rollout-trace/src/reducer/tool/agents_tests.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/rollout-trace/src/reducer/tool/terminal_tests.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/rollout-trace/src/thread_tests.rs": [
+      "gpt-previous",
+      "gpt-selected",
+      "gpt-test"
+    ],
+    "codex-rs/rollout-trace/src/writer.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/skills/src/assets/samples/imagegen/SKILL.md": [
+      "gpt-image-1.5",
+      "gpt-image-2"
+    ],
+    "codex-rs/skills/src/assets/samples/imagegen/references/cli.md": [
+      "gpt-image-",
+      "gpt-image-1.5",
+      "gpt-image-2"
+    ],
+    "codex-rs/skills/src/assets/samples/imagegen/references/codex-network.md": [
+      "gpt-image-1.5"
+    ],
+    "codex-rs/skills/src/assets/samples/imagegen/references/image-api.md": [
+      "gpt-image-1",
+      "gpt-image-1-mini",
+      "gpt-image-1.5",
+      "gpt-image-2"
+    ],
+    "codex-rs/skills/src/assets/samples/imagegen/references/prompting.md": [
+      "gpt-image-1.5",
+      "gpt-image-2"
+    ],
+    "codex-rs/skills/src/assets/samples/imagegen/references/sample-prompts.md": [
+      "gpt-image-1.5",
+      "gpt-image-2"
+    ],
+    "codex-rs/skills/src/assets/samples/imagegen/scripts/image_gen.py": [
+      "gpt-image-",
+      "gpt-image-1",
+      "gpt-image-1-mini",
+      "gpt-image-1.5",
+      "gpt-image-2"
+    ],
+    "codex-rs/skills/src/assets/samples/openai-docs/SKILL.md": [
+      "GPT-6",
+      "gpt-6-astra.md"
+    ],
+    "codex-rs/skills/src/assets/samples/openai-docs/references/latest-model.md": [
+      "GPT-6",
+      "gpt-4.1",
+      "gpt-5.4",
+      "gpt-5.6-luna",
+      "gpt-5.6-terra",
+      "gpt-6",
+      "gpt-6-astra",
+      "gpt-6-astra.md",
+      "gpt-6-pro"
+    ],
+    "codex-rs/skills/src/assets/samples/openai-docs/references/model-migration.md": [
+      "GPT-5.5",
+      "GPT-5.6",
+      "GPT-6",
+      "gpt-6-astra.md"
+    ],
+    "codex-rs/skills/src/assets/samples/openai-docs/references/prompting-guide.md": [
+      "GPT-5.6",
+      "GPT-6",
+      "gpt-6-astra.md"
+    ],
+    "codex-rs/skills/src/assets/samples/openai-docs/references/upgrade-guide.md": [
+      "GPT-6",
+      "GPT-6-specific",
+      "gpt-6-astra.md"
+    ],
+    "codex-rs/skills/src/assets/samples/openai-docs/references/upgrading-to-gpt-6-astra.md": [
+      "GPT-4.1",
+      "GPT-4o",
+      "GPT-5.5",
+      "GPT-5.6",
+      "GPT-6",
+      "GPT-6.",
+      "gpt-5.6-luna",
+      "gpt-5.6-terra",
+      "gpt-6",
+      "gpt-6-astra",
+      "gpt-6-astra.md"
+    ],
+    "codex-rs/state/src/extract.rs": [
+      "gpt-5",
+      "gpt-5.2-codex"
+    ],
+    "codex-rs/state/src/model/thread_metadata.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/state/src/runtime/test_support.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/thread-manager-sample/README.md": [
+      "gpt-5.2"
+    ],
+    "codex-rs/thread-store/src/local/rollout_migration/line_parser_tests.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/thread-store/src/thread_metadata_sync.rs": [
+      "gpt-5.2-codex"
+    ],
+    "codex-rs/tui/src/analytics/account_layout_tests.rs": [
+      "GPT-5.5"
+    ],
+    "codex-rs/tui/src/analytics/consumer_refresh_tests.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/tui/src/analytics/test_fixtures.rs": [
+      "GPT-5.5",
+      "GPT-5.6-Sol",
+      "GPT-5.6-Terra"
+    ],
+    "codex-rs/tui/src/analytics/test_support.rs": [
+      "GPT-5.5"
+    ],
+    "codex-rs/tui/src/analytics/tokens_tests.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/tui/src/analytics_tests.rs": [
+      "GPT-5.5",
+      "GPT-5.6-Sol",
+      "GPT-5.6-Terra"
+    ],
+    "codex-rs/tui/src/app/agents_overview_actions_tests.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/tui/src/app/app_server_event_targets.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/tui/src/app/config_persistence.rs": [
+      "gpt-5.4",
+      "gpt-5.5",
+      "gpt-test"
+    ],
+    "codex-rs/tui/src/app/owned_transcript_tests.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/tui/src/app/startup_prompts.rs": [
+      "GPT-5.4",
+      "GPT-6",
+      "gpt-5.4",
+      "gpt-5.4-mini",
+      "gpt-6-luna",
+      "gpt-6-sol"
+    ],
+    "codex-rs/tui/src/app/tests.rs": [
+      "gpt-5.4",
+      "gpt-5.5",
+      "gpt-agent",
+      "gpt-plan",
+      "gpt-replacement",
+      "gpt-restored",
+      "gpt-test"
+    ],
+    "codex-rs/tui/src/app/tests/active_reconnect_tests.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/tui/src/app/tests/advanced_reasoning_tests.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/tui/src/app/tests/backend_banner_fallback_tests.rs": [
+      "gpt-5.5",
+      "gpt-5.6-terra",
+      "gpt-reserve"
+    ],
+    "codex-rs/tui/src/app/tests/backend_banner_startup_tests.rs": [
+      "gpt-5.5",
+      "gpt-5.6-terra"
+    ],
+    "codex-rs/tui/src/app/tests/background_task_defaults_tests.rs": [
+      "GPT-6-Astra",
+      "gpt-5.2",
+      "gpt-5.5",
+      "gpt-6-astra",
+      "gpt-local-choice"
+    ],
+    "codex-rs/tui/src/app/tests/daybreak_tests.rs": [
+      "gpt-5.6-sol",
+      "gpt-6-astra",
+      "gpt-6-astra-wm"
+    ],
+    "codex-rs/tui/src/app/tests/fresh_sparkle_tests.rs": [
+      "gpt-5.5",
+      "gpt-6-astra"
+    ],
+    "codex-rs/tui/src/app/tests/local_command_scroll_tests.rs": [
+      "gpt-5.4",
+      "gpt-5.5"
+    ],
+    "codex-rs/tui/src/app/tests/luna_reserve_recovery_tests.rs": [
+      "gpt-5.5",
+      "gpt-5.6-terra",
+      "gpt-reserve"
+    ],
+    "codex-rs/tui/src/app/tests/model_catalog.rs": [
+      "GPT-5.4",
+      "GPT-5.4.",
+      "GPT-6",
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-5.4-mini",
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-6-luna",
+      "gpt-6-sol"
+    ],
+    "codex-rs/tui/src/app/tests/model_defaults_tests.rs": [
+      "gpt-5.5",
+      "gpt-5.6-terra"
+    ],
+    "codex-rs/tui/src/app/tests/navigation_reconnect_tests.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/tui/src/app/tests/projectless_tests.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/tui/src/app/tests/realtime_requests.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/tui/src/app/tests/recap_generation_tests.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/tui/src/app/tests/safety_buffering.rs": [
+      "gpt-5.6-luna",
+      "gpt-5.6-terra"
+    ],
+    "codex-rs/tui/src/app/tests/session_lifecycle_requests.rs": [
+      "gpt-5.2",
+      "gpt-5.4"
+    ],
+    "codex-rs/tui/src/app/tests/startup_defaults_tests.rs": [
+      "GPT-6.1-Sol",
+      "gpt-5.5"
+    ],
+    "codex-rs/tui/src/app/tests/startup_warnings_tests.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/tui/src/app/thread_events.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/tui/src/app/thread_session_state.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/tui/src/app/thread_title.rs": [
+      "gpt-5.6-luna"
+    ],
+    "codex-rs/tui/src/app/thread_title_tests.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/tui/src/app_server_session.rs": [
+      "gpt-5",
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-5.5"
+    ],
+    "codex-rs/tui/src/app_server_session/external_agent_config_tests.rs": [
+      "claude-code"
+    ],
+    "codex-rs/tui/src/app_server_session/provider_selection_tests.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/tui/src/app_server_session/reasoning_defaults_tests.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/tui/src/app_server_session/workspace_roots_tests.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/tui/src/bottom_pane/chat_composer.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/tui/src/bottom_pane/chat_composer/sparkle_tests.rs": [
+      "gpt-5.5",
+      "gpt-6-astra"
+    ],
+    "codex-rs/tui/src/bottom_pane/chat_composer_effort_tests.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/tui/src/bottom_pane/effort_status_line_tests.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/tui/src/bottom_pane/list_selection_view.rs": [
+      "gpt-4.1-codex",
+      "gpt-5.1-codex",
+      "gpt-5.1-codex-mini"
+    ],
+    "codex-rs/tui/src/bottom_pane/status_line_setup.rs": [
+      "gpt-5",
+      "gpt-5-codex"
+    ],
+    "codex-rs/tui/src/bottom_pane/status_line_style.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/tui/src/bottom_pane/status_surface_preview.rs": [
+      "gpt-5.2-codex"
+    ],
+    "codex-rs/tui/src/chatwidget/model_popups.rs": [
+      "gpt-5.1-codex",
+      "gpt-5.1-codex-max",
+      "gpt-5.2"
+    ],
+    "codex-rs/tui/src/chatwidget/tests/app_server.rs": [
+      "GPT-5.6",
+      "gpt-5",
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-default",
+      "gpt-plan"
+    ],
+    "codex-rs/tui/src/chatwidget/tests/backend_banners_tests.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/tui/src/chatwidget/tests/bedrock_catalog_tests.rs": [
+      "gpt-6-astra",
+      "gpt-6.1-sol"
+    ],
+    "codex-rs/tui/src/chatwidget/tests/collaboration_catalog_tests.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/tui/src/chatwidget/tests/composer_submission.rs": [
+      "gpt-5",
+      "gpt-5.4"
+    ],
+    "codex-rs/tui/src/chatwidget/tests/helpers.rs": [
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-5.6-sol"
+    ],
+    "codex-rs/tui/src/chatwidget/tests/history_replay.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/tui/src/chatwidget/tests/luna_reserve_usage_tests.rs": [
+      "gpt-5.6-sol",
+      "gpt-reserve"
+    ],
+    "codex-rs/tui/src/chatwidget/tests/model_display_name_tests.rs": [
+      "GPT-5.6",
+      "gpt-5.5",
+      "gpt-5.6-luna"
+    ],
+    "codex-rs/tui/src/chatwidget/tests/model_picker_tests.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/tui/src/chatwidget/tests/permissions.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/tui/src/chatwidget/tests/plan_mode.rs": [
+      "gpt-5",
+      "gpt-5.5",
+      "gpt-5.6-luna",
+      "gpt-5.6-terra"
+    ],
+    "codex-rs/tui/src/chatwidget/tests/popups_and_settings.rs": [
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-5.5",
+      "gpt-5.6-terra"
+    ],
+    "codex-rs/tui/src/chatwidget/tests/session_model_selection_tests.rs": [
+      "gpt-5.5",
+      "gpt-6-astra"
+    ],
+    "codex-rs/tui/src/chatwidget/tests/slash_commands.rs": [
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-5.5",
+      "gpt-5.6-terra"
+    ],
+    "codex-rs/tui/src/chatwidget/tests/sparkle_submission_tests.rs": [
+      "gpt-6-astra"
+    ],
+    "codex-rs/tui/src/chatwidget/tests/status_and_layout.rs": [
+      "gpt-5",
+      "gpt-5.2",
+      "gpt-5.4",
+      "gpt-5.5",
+      "gpt-5.6-sol"
+    ],
+    "codex-rs/tui/src/chatwidget/tests/status_command_tests.rs": [
+      "GPT-5",
+      "GPT-5.4",
+      "GPT-5.5",
+      "gpt-5-mini",
+      "gpt-5.4",
+      "gpt-5.5"
+    ],
+    "codex-rs/tui/src/chatwidget/thread_usage_tests.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/tui/src/daybreak.rs": [
+      "gpt-5.6-sol",
+      "gpt-6-astra",
+      "gpt-6-astra-wm"
+    ],
+    "codex-rs/tui/src/debug_config.rs": [
+      "gpt-5",
+      "gpt-5.6-terra"
+    ],
+    "codex-rs/tui/src/dynamic_tools_tests.rs": [
+      "gpt-5.5"
+    ],
+    "codex-rs/tui/src/external_agent_config_migration/source.rs": [
+      "claude-code"
+    ],
+    "codex-rs/tui/src/history_cell/tests.rs": [
+      "gpt-3.5-turbo",
+      "gpt-5",
+      "gpt-5.6-sol"
+    ],
+    "codex-rs/tui/src/managed_new_thread_defaults.rs": [
+      "gpt-5.4"
+    ],
+    "codex-rs/tui/src/model_catalog.rs": [
+      "gpt-6-luna",
+      "gpt-reserve"
+    ],
+    "codex-rs/tui/src/model_migration.rs": [
+      "gpt-5",
+      "gpt-5-codex",
+      "gpt-5-codex-mini",
+      "gpt-5.1",
+      "gpt-5.1-codex-max",
+      "gpt-5.1-codex-mini",
+      "gpt-5.2-codex",
+      "gpt-new",
+      "gpt-old"
+    ],
+    "codex-rs/tui/src/multi_agents.rs": [
+      "gpt-5"
+    ],
+    "codex-rs/tui/src/startup_orchestration.rs": [
+      "gpt-oss"
+    ],
+    "codex-rs/tui/src/status/tests.rs": [
+      "gpt-5.1-codex",
+      "gpt-5.1-codex-max",
+      "gpt-5.5",
+      "gpt-5.6-sol"
+    ],
+    "codex-rs/tui/src/status/thread_usage_tests.rs": [
+      "GPT-5",
+      "GPT-5.4",
+      "GPT-5.6",
+      "gpt-5-mini",
+      "gpt-5.4",
+      "gpt-5.6-sol"
+    ],
+    "codex-rs/tui/src/temporary_structured_request_tests.rs": [
+      "gpt-5.2"
+    ],
+    "codex-rs/tui/src/transcript_view_tests.rs": [
+      "gpt-test"
+    ],
+    "codex-rs/tui/tests/suite/directory_trust.rs": [
+      "gpt-5.6-terra"
+    ],
+    "codex-rs/tui/tests/suite/external_editor_tests.rs": [
+      "GPT-5.6-Terra"
+    ],
+    "codex-rs/tui/tests/suite/focus_palette.rs": [
+      "GPT-5.6-Terra",
+      "gpt-5.6-terra",
+      "gpt-6-sol"
+    ],
+    "codex-rs/tui/tests/suite/reconnect.rs": [
+      "gpt-5.6-terra"
+    ],
+    "codex-rs/tui/tests/suite/resize_reflow.rs": [
+      "gpt-5.4",
+      "gpt-5.6-terra",
+      "gpt-6-sol"
+    ],
+    "codex-rs/utils/cli/src/config_override.rs": [
+      "gpt-5.1",
+      "gpt-5.2",
+      "o3"
+    ],
+    "codex-rs/utils/plugins/src/plugin_namespace.rs": [
+      "claude-plugin"
+    ],
+    "docs/agents.md": [
+      "claude-haiku-4.5",
+      "claude-opus-4.8",
+      "claude-sonnet-4.6",
+      "gemini-3.1-pro",
+      "gemini-3.5-flash",
+      "gpt-5.1-codex-max",
+      "gpt-5.4",
+      "gpt-5.4-mini",
+      "gpt-5.5",
+      "qwen-3-coder"
+    ],
+    "docs/auto-drive.md": [
+      "gpt-5.1"
+    ],
+    "docs/config.md": [
+      "claude-haiku-4.5",
+      "claude-opus-4.8",
+      "claude-proxy",
+      "claude-sonnet-4.6",
+      "gemini-3.1-pro",
+      "gemini-3.5-flash",
+      "gpt-3.5-turbo",
+      "gpt-4o",
+      "gpt-5.1",
+      "gpt-5.1-codex",
+      "gpt-5.1-codex-max",
+      "gpt-5.4",
+      "gpt-5.4-mini",
+      "gpt-5.5",
+      "o3",
+      "o4-mini",
+      "qwen-3-coder"
+    ],
+    "docs/example-config.md": [
+      "GPT-5",
+      "gpt-5.1-codex-max",
+      "gpt-5.2"
+    ],
+    "docs/exec.md": [
+      "gpt-5.1",
+      "gpt-5.1-codex"
+    ],
+    "docs/faq.md": [
+      "GPT-5.4",
+      "gpt-5.4",
+      "o3",
+      "o4-mini"
+    ],
+    "docs/integration-zed.md": [
+      "gpt-5.1",
+      "gpt-5.1-codex"
+    ],
+    "docs/slash-commands.md": [
+      "claude-haiku-4.5",
+      "claude-opus-4.8",
+      "claude-sonnet-4.6",
+      "gemini-3.1-pro",
+      "gemini-3.5-flash",
+      "gpt-5.1-codex-max",
+      "gpt-5.4",
+      "gpt-5.4-mini",
+      "gpt-5.5",
+      "qwen-3-coder"
+    ],
+    "scripts/code-hook-smoke.sh": [
+      "gpt-5.1-codex"
+    ],
+    "scripts/mock_responses_websocket_server.py": [
+      "gpt-5.2"
+    ],
+    "scripts/openai-proxy.js": [
+      "gpt-4o-mini"
+    ],
+    "sdk/python/README.md": [
+      "gpt-5"
+    ],
+    "sdk/python/docs/api-reference.md": [
+      "gpt-5.4"
+    ],
+    "sdk/python/docs/getting-started.md": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/01_quickstart_constructor/async.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/01_quickstart_constructor/sync.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/02_turn_run/async.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/02_turn_run/sync.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/03_turn_stream_events/async.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/03_turn_stream_events/sync.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/05_existing_thread/async.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/05_existing_thread/sync.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/06_thread_lifecycle_and_controls/async.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/06_thread_lifecycle_and_controls/sync.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/07_image_and_text/async.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/07_image_and_text/sync.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/08_local_image_and_text/async.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/08_local_image_and_text/sync.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/09_async_parity/sync.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/10_error_handling_and_retry/async.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/10_error_handling_and_retry/sync.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/11_cli_mini_app/async.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/11_cli_mini_app/sync.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/12_turn_params_kitchen_sink/async.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/12_turn_params_kitchen_sink/sync.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/13_model_select_and_turn_params/async.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/13_model_select_and_turn_params/sync.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/14_turn_controls/async.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/examples/14_turn_controls/sync.py": [
+      "gpt-5.4"
+    ],
+    "sdk/python/tests/test_client_rpc_methods.py": [
+      "gpt-5"
+    ],
+    "sdk/python/tests/test_real_app_server_integration.py": [
+      "gpt-5.4"
+    ],
+    "sdk/typescript/tests/run.test.ts": [
+      "gpt-test-1"
+    ],
+    "code-rs/core/src/modern_models.rs": [
+      "GPT-5.6",
+      "GPT-6",
+      "GPT-6.1",
+      "gpt-5.6-luna",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-6-astra",
+      "gpt-6-luna",
+      "gpt-6-sol",
+      "gpt-6.1-sol"
+    ],
+    "code-rs/core/src/client_model_tests.rs": [
+      "gpt-5.5",
+      "gpt-6-terra",
+      "gpt-6.1-sol"
+    ]
+  }
+}

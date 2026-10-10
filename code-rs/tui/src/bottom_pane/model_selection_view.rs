@@ -60,6 +60,8 @@ impl FlatPreset {
             ReasoningEffort::Medium => "Medium",
             ReasoningEffort::Low => "Low",
             ReasoningEffort::Minimal => "Minimal",
+            ReasoningEffort::Max => "Max",
+            ReasoningEffort::Disabled => "None",
             ReasoningEffort::None => "None",
         }
     }
@@ -993,6 +995,8 @@ impl ModelSelectionView {
             ReasoningEffort::Medium => 2,
             ReasoningEffort::Low => 3,
             ReasoningEffort::Minimal => 4,
+            ReasoningEffort::Max => 5,
+            ReasoningEffort::Disabled => 0,
             ReasoningEffort::None => 5,
         }
     }
@@ -1004,6 +1008,8 @@ impl ModelSelectionView {
             ReasoningEffort::Medium => "Medium",
             ReasoningEffort::Low => "Low",
             ReasoningEffort::Minimal => "Minimal",
+            ReasoningEffort::Max => "Max",
+            ReasoningEffort::Disabled => "None",
             ReasoningEffort::None => "None",
         }
     }

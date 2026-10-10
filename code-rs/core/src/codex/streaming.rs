@@ -3401,6 +3401,7 @@ async fn run_turn(
             }
             Err(CodexErr::QuotaExceeded) => return Err(CodexErr::QuotaExceeded),
             Err(e) => {
+                if crate::error::non_retryable_model_error(&e) { return Err(e); }
                 if let CodexErr::Stream(msg, _maybe_delay, _req_id) = &e
                     && is_usage_limit_stream_error(msg)
                     && !did_usage_limit_model_fallback

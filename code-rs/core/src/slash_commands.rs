@@ -334,7 +334,7 @@ mod tests {
         }
 
         let defaults = get_default_models();
-        assert!(defaults.iter().any(|v| v == "claude-sonnet-4.6"));
+        assert!(defaults.iter().any(|v| v == "claude-sonnet-5-5"));
 
         restore_var("PATH", orig_path);
         restore_var("HOME", orig_home);

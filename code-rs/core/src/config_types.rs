@@ -956,6 +956,12 @@ fn default_auto_drive_model_routing_reasoning_levels() -> Vec<ReasoningEffort> {
 pub fn default_auto_drive_model_routing_entries() -> Vec<AutoDriveModelRoutingEntry> {
     vec![
         AutoDriveModelRoutingEntry {
+            model: "gpt-6.1-sol".to_string(),
+            enabled: true,
+            reasoning_levels: vec![ReasoningEffort::Low, ReasoningEffort::Medium, ReasoningEffort::High, ReasoningEffort::XHigh, ReasoningEffort::Max],
+            description: "Complex coding, investigation, planning, and review.".to_string(),
+        },
+        AutoDriveModelRoutingEntry {
             model: "gpt-5.5".to_string(),
             enabled: true,
             reasoning_levels: vec![ReasoningEffort::High, ReasoningEffort::XHigh],
@@ -1506,14 +1512,17 @@ impl From<ShellEnvironmentPolicyToml> for ShellEnvironmentPolicy {
 #[serde(rename_all = "lowercase")]
 #[strum(serialize_all = "lowercase")]
 pub enum ReasoningEffort {
-    /// Minimal reasoning. Accepts legacy value "none" for backwards compatibility.
-    #[serde(alias = "none")]
+    /// No reasoning for models that explicitly support it.
+    #[serde(rename = "none")]
+    #[strum(serialize = "none")]
+    Disabled,
     Minimal,
     Low,
     #[default]
     Medium,
     High,
     XHigh,
+    Max,
     /// Deprecated: previously disabled reasoning. Kept for internal use only.
     #[serde(skip)]
     None,
@@ -1753,13 +1762,13 @@ impl Default for RetentionConfig {
 impl From<code_protocol::config_types::ReasoningEffort> for ReasoningEffort {
     fn from(v: code_protocol::config_types::ReasoningEffort) -> Self {
         match v {
-            code_protocol::config_types::ReasoningEffort::None => ReasoningEffort::None,
+            code_protocol::config_types::ReasoningEffort::None => ReasoningEffort::Disabled,
             code_protocol::config_types::ReasoningEffort::Minimal => ReasoningEffort::Minimal,
             code_protocol::config_types::ReasoningEffort::Low => ReasoningEffort::Low,
             code_protocol::config_types::ReasoningEffort::Medium => ReasoningEffort::Medium,
             code_protocol::config_types::ReasoningEffort::High => ReasoningEffort::High,
+            code_protocol::config_types::ReasoningEffort::Max => ReasoningEffort::Max,
             code_protocol::config_types::ReasoningEffort::XHigh
-            | code_protocol::config_types::ReasoningEffort::Max
             | code_protocol::config_types::ReasoningEffort::Ultra
             | code_protocol::config_types::ReasoningEffort::Persistent => ReasoningEffort::XHigh,
             code_protocol::config_types::ReasoningEffort::Custom(_) => ReasoningEffort::Medium,
@@ -1770,6 +1779,8 @@ impl From<code_protocol::config_types::ReasoningEffort> for ReasoningEffort {
 impl From<ReasoningEffort> for code_protocol::config_types::ReasoningEffort {
     fn from(v: ReasoningEffort) -> Self {
         match v {
+            ReasoningEffort::Disabled => code_protocol::config_types::ReasoningEffort::None,
+            ReasoningEffort::Max => code_protocol::config_types::ReasoningEffort::Max,
             ReasoningEffort::Minimal | ReasoningEffort::None => {
                 code_protocol::config_types::ReasoningEffort::Minimal
             }

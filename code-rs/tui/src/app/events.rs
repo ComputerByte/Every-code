@@ -57,6 +57,8 @@ impl App<'_> {
         let remote_tx = self.app_event_tx.clone();
         let remote_auth_manager = self._server.auth_manager();
         let remote_provider = self.config.model_provider.clone();
+        let remote_first_party = self.config.model_provider_id == "openai"
+            && remote_provider.uses_official_openai_model_catalog();
         let remote_code_home = self.config.code_home.clone();
         let remote_using_chatgpt_hint = self.config.using_chatgpt_auth;
         tokio::spawn(async move {
@@ -86,11 +88,12 @@ impl App<'_> {
                 auth_mode,
                 supports_pro_only_models,
             );
-            let presets = crate::remote_model_presets::merge_remote_models(
+            let presets = crate::remote_model_presets::merge_remote_models_for_provider(
                 remote_models,
                 presets,
                 auth_mode,
                 supports_pro_only_models,
+                remote_first_party,
             );
             let default_model = remote_manager.default_model_slug(auth_mode).await;
             remote_tx.send(AppEvent::ModelPresetsUpdated {

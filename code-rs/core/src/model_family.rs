@@ -264,13 +264,13 @@ fn apply_upstream_model_overrides(mut family: ModelFamily) -> ModelFamily {
         .default_reasoning_level
         .as_ref()
         .map(|effort| match effort {
-            code_protocol::openai_models::ReasoningEffort::None
-            | code_protocol::openai_models::ReasoningEffort::Minimal => ReasoningEffort::Minimal,
+            code_protocol::openai_models::ReasoningEffort::None => ReasoningEffort::Disabled,
+            code_protocol::openai_models::ReasoningEffort::Minimal => ReasoningEffort::Minimal,
             code_protocol::openai_models::ReasoningEffort::Low => ReasoningEffort::Low,
             code_protocol::openai_models::ReasoningEffort::Medium => ReasoningEffort::Medium,
             code_protocol::openai_models::ReasoningEffort::High => ReasoningEffort::High,
+            code_protocol::openai_models::ReasoningEffort::Max => ReasoningEffort::Max,
             code_protocol::openai_models::ReasoningEffort::XHigh
-            | code_protocol::openai_models::ReasoningEffort::Max
             | code_protocol::openai_models::ReasoningEffort::Ultra
             | code_protocol::openai_models::ReasoningEffort::Persistent => ReasoningEffort::XHigh,
             code_protocol::openai_models::ReasoningEffort::Custom(_) => ReasoningEffort::Medium,
@@ -319,6 +319,19 @@ pub fn find_family_for_model(slug: &str) -> Option<ModelFamily> {
     {
         family.slug = slug.to_string();
         return Some(family);
+    }
+
+    if crate::modern_models::modern_model(slug).is_some() {
+        return model_family!(
+            slug, slug,
+            supports_reasoning_summaries: true,
+            default_reasoning_effort: Some(ReasoningEffort::Medium),
+            supports_parallel_tool_calls: true,
+            uses_shell_command_tool: true,
+            apply_patch_tool_type: Some(ApplyPatchToolType::Freeform),
+            max_output_tokens: Some(crate::modern_models::PUBLIC_MAX_OUTPUT_TOKENS),
+            truncation_policy: TruncationPolicy::Tokens(10_000),
+        );
     }
 
     let normalized_slug = slug.to_ascii_lowercase();
@@ -548,7 +561,12 @@ pub fn find_family_for_model(slug: &str) -> Option<ModelFamily> {
 }
 
 pub fn derive_default_model_family(model: &str) -> ModelFamily {
-    apply_upstream_model_overrides(ModelFamily {
+    apply_upstream_model_overrides(derive_provider_model_family(model))
+}
+
+/// Unknown proxy capabilities must not be inferred from an OpenAI model name.
+pub fn derive_provider_model_family(model: &str) -> ModelFamily {
+    ModelFamily {
         slug: model.to_string(),
         family: model.to_string(),
         needs_special_apply_patch_instructions: false,
@@ -572,7 +590,7 @@ pub fn derive_default_model_family(model: &str) -> ModelFamily {
         supports_image_generation: false,
         base_instructions: BASE_INSTRUCTIONS.to_string(),
         content_filter_guidance: CONTENT_FILTER_GUIDANCE.to_string(),
-    })
+    }
 }
 
 fn supports_image_generation(model_info: &ModelInfo) -> bool {
@@ -587,6 +605,15 @@ mod tests {
     use super::find_family_for_model;
     use super::parse_upstream_models;
     use super::supports_extended_context;
+
+    #[test]
+    fn gpt_6_1_sol_has_execution_metadata() {
+        let family = find_family_for_model("gpt-6.1-sol").expect("priority model resolves");
+        assert_eq!(family.slug, "gpt-6.1-sol");
+        assert!(family.supports_reasoning_summaries);
+        assert!(family.use_responses_lite);
+        assert_eq!(family.max_output_tokens, Some(128_000));
+    }
 
     #[test]
     fn image_generation_support_tracks_image_input_modality() {
@@ -632,7 +659,7 @@ mod tests {
             assert!(supports_extended_context(model), "{model} should support 1M context");
         }
 
-        assert!(!supports_extended_context("gpt-5.6-terra"));
+        assert!(supports_extended_context("gpt-5.6-terra"));
         assert!(!supports_extended_context("gpt-5.5"));
     }
 
@@ -681,9 +708,10 @@ pub const fn default_auto_compact_limit_for_context_window(context_window: u64) 
 }
 
 pub fn supports_extended_context(model: &str) -> bool {
-    ["gpt-5.4", "gpt-5.6-luna", "gpt-5.6-sol"]
+    ["gpt-5.4"]
         .iter()
         .any(|supported| model.eq_ignore_ascii_case(supported))
+        || crate::modern_models::modern_model(model).is_some()
 }
 
 pub fn resolve_context_mode_limits(
@@ -692,7 +720,11 @@ pub fn resolve_context_mode_limits(
     family: &ModelFamily,
 ) -> (Option<u64>, Option<i64>) {
     match mode {
-        Some(ContextMode::OneM | ContextMode::Auto) if supports_extended_context(model) => (
+        Some(ContextMode::OneM | ContextMode::Auto) if crate::modern_models::modern_model(model).is_some() && family.context_window.is_some() => (
+            Some(crate::modern_models::PUBLIC_CONTEXT_WINDOW),
+            Some(default_auto_compact_limit_for_context_window(crate::modern_models::PUBLIC_MAX_INPUT_TOKENS)),
+        ),
+        Some(ContextMode::OneM | ContextMode::Auto) if model.eq_ignore_ascii_case("gpt-5.4") => (
             Some(EXTENDED_CONTEXT_WINDOW_1M),
             Some(default_auto_compact_limit_for_context_window(
                 EXTENDED_CONTEXT_WINDOW_1M,

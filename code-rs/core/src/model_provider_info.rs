@@ -503,6 +503,17 @@ impl ModelProviderInfo {
             .map_or(false, |base| base.contains("/backend-api"))
     }
 
+    /// First-party catalog provenance, independent of model slug or display name.
+    pub fn uses_official_openai_model_catalog(&self) -> bool {
+        if !matches!(self.wire_api, WireApi::Responses | WireApi::ResponsesWebsocket) { return false; }
+        self.base_url.as_ref().map_or(true, |base| {
+            reqwest::Url::parse(base).ok().is_some_and(|url| {
+                url.scheme() == "https" && (url.host_str() == Some("api.openai.com")
+                    || (url.host_str() == Some("chatgpt.com") && url.path().starts_with("/backend-api/codex")))
+            })
+        })
+    }
+
     pub(crate) fn is_public_openai_responses_endpoint(&self) -> bool {
         if !matches!(self.wire_api, WireApi::Responses | WireApi::ResponsesWebsocket) {
             return false;
