@@ -38,6 +38,7 @@ pub mod debug_logger;
 pub mod review_coord;
 mod environment_context;
 mod reasoning;
+pub mod modern_models;
 pub mod retention;
 pub mod telemetry;
 pub mod timeboxed_exec_guidance;

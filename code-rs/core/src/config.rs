@@ -20,7 +20,6 @@ use crate::config_types::Notifications;
 use crate::config_types::OtelConfig;
 use crate::config_types::OtelConfigToml;
 use crate::config_types::OtelExporterKind;
-use crate::config_types::default_auto_drive_model_routing_entries;
 use crate::config_types::ProjectCommandConfig;
 use crate::config_types::ProjectHookConfig;
 use crate::config_types::SandboxWorkspaceWrite;
@@ -161,11 +160,13 @@ fn normalize_auto_drive_routing_reasoning_levels(
 ) -> Vec<ReasoningEffort> {
     let mut normalized = Vec::new();
     for level in [
+        ReasoningEffort::Disabled,
         ReasoningEffort::Minimal,
         ReasoningEffort::Low,
         ReasoningEffort::Medium,
         ReasoningEffort::High,
         ReasoningEffort::XHigh,
+        ReasoningEffort::Max,
     ] {
         if levels.contains(&level) {
             normalized.push(level);
@@ -181,10 +182,6 @@ fn normalize_auto_drive_routing_model(model: &str) -> Option<String> {
     }
 
     let normalized = trimmed.to_ascii_lowercase();
-    if !normalized.starts_with("gpt-") {
-        return None;
-    }
-
     Some(normalized)
 }
 
@@ -196,10 +193,6 @@ fn sanitize_auto_drive_routing_entries(entries: &mut Vec<AutoDriveModelRoutingEn
         };
 
         let reasoning_levels = normalize_auto_drive_routing_reasoning_levels(&entry.reasoning_levels);
-        if reasoning_levels.is_empty() {
-            continue;
-        }
-
         normalized_entries.push(AutoDriveModelRoutingEntry {
             model,
             enabled: entry.enabled,
@@ -1362,12 +1355,16 @@ impl Config {
         let mut model_family =
             find_family_for_model(&model).unwrap_or_else(|| derive_default_model_family(&model));
         if model_provider_id != "openai"
-            || !model_provider.is_public_openai_responses_endpoint()
+            || !model_provider.uses_official_openai_model_catalog()
         {
             // codex-rs resolves custom providers through their provider-owned
             // ModelInfo manager; unknown custom-provider models use fallback
             // metadata. Legacy code-rs starts from its embedded OpenAI catalog,
             // so remove OpenAI-only Lite semantics at this compatibility seam.
+            if crate::modern_models::modern_model(&model).is_some() {
+                model_family = crate::model_family::derive_provider_model_family(&model);
+                model_family.supports_reasoning_summaries = cfg.model_supports_reasoning_summaries.unwrap_or(false);
+            }
             model_family.use_responses_lite = false;
         }
         let default_tool_output_max_bytes = model_family.tool_output_max_bytes();
@@ -1393,12 +1390,23 @@ impl Config {
             .or(cfg.model_request_max_output_tokens);
         let mut model_auto_compact_token_limit = cfg.model_auto_compact_token_limit;
         let (context_mode_window, context_mode_auto_compact_limit) =
-            resolve_context_mode_limits(&model, context_mode, &model_family);
+            resolve_context_mode_limits(&model,
+                if model_provider_id == "openai" && model_provider.uses_official_openai_model_catalog() {
+                    context_mode
+                } else { Some(ContextMode::Disabled) }, &model_family);
         if model_context_window.is_none() {
             model_context_window = context_mode_window;
         }
         if model_auto_compact_token_limit.is_none() {
             model_auto_compact_token_limit = context_mode_auto_compact_limit;
+        }
+
+        if using_chatgpt_auth && model_provider_id == "openai"
+            && model_provider.uses_official_openai_model_catalog()
+            && crate::modern_models::modern_model(&model).is_some()
+        {
+            model_context_window = model_context_window.map(|limit| limit.min(crate::modern_models::CODEX_MAX_CONTEXT_WINDOW));
+            model_auto_compact_token_limit = model_auto_compact_token_limit.map(|limit| limit.min((crate::modern_models::CODEX_MAX_CONTEXT_WINDOW * 9 / 10) as i64));
         }
 
         // Load base instructions override from a file if specified. If the
@@ -1611,9 +1619,6 @@ impl Config {
                 defaults
             });
         sanitize_auto_drive_routing_entries(&mut auto_drive.model_routing_entries);
-        if auto_drive.model_routing_entries.is_empty() {
-            auto_drive.model_routing_entries = default_auto_drive_model_routing_entries();
-        }
 
         let subagent_max_depth = cfg
             .subagents
@@ -1633,9 +1638,8 @@ impl Config {
                 .iter()
                 .any(|entry| entry.enabled)
         {
-            if let Some(first_entry) = auto_drive.model_routing_entries.first_mut() {
-                first_entry.enabled = true;
-            }
+            return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput,
+                "auto_drive.model_routing_enabled requires at least one explicitly enabled routing entry"));
         }
         if auto_drive_use_chat_model {
             auto_drive.model = model.clone();
@@ -2764,7 +2768,7 @@ model_verbosity = "high"
 
         assert!(!custom_config.model_family.use_responses_lite);
         assert_eq!(
-            Some(crate::model_family::EXTENDED_CONTEXT_WINDOW_1M),
+            None,
             custom_config.model_context_window
         );
 
@@ -3048,21 +3052,21 @@ model_verbosity = "high"
             fixture.code_home(),
         )?;
 
-        assert_eq!(config.auto_drive.model_routing_entries.len(), 2);
+        assert_eq!(config.auto_drive.model_routing_entries.len(), 3);
         assert_eq!(
-            config.auto_drive.model_routing_entries[0].model,
+            config.auto_drive.model_routing_entries[1].model,
             "gpt-5.5"
         );
         assert_eq!(
-            config.auto_drive.model_routing_entries[0].reasoning_levels,
+            config.auto_drive.model_routing_entries[1].reasoning_levels,
             vec![ReasoningEffort::High, ReasoningEffort::XHigh]
         );
         assert_eq!(
-            config.auto_drive.model_routing_entries[1].model,
+            config.auto_drive.model_routing_entries[2].model,
             "gpt-5.6-luna"
         );
         assert_eq!(
-            config.auto_drive.model_routing_entries[1].reasoning_levels,
+            config.auto_drive.model_routing_entries[2].reasoning_levels,
             vec![ReasoningEffort::High]
         );
         Ok(())
@@ -3078,7 +3082,7 @@ model_verbosity = "high"
                 model: " custom-not-gpt ".to_string(),
                 enabled: true,
                 reasoning_levels: vec![ReasoningEffort::High],
-                description: "invalid model should be dropped".to_string(),
+                description: "preserve requested model for validation".to_string(),
             },
             AutoDriveModelRoutingEntry {
                 model: " GPT-5.3-CODEX ".to_string(),
@@ -3104,8 +3108,9 @@ model_verbosity = "high"
             fixture.code_home(),
         )?;
 
-        assert_eq!(config.auto_drive.model_routing_entries.len(), 1);
-        let entry = &config.auto_drive.model_routing_entries[0];
+        assert_eq!(config.auto_drive.model_routing_entries.len(), 2);
+        assert_eq!(config.auto_drive.model_routing_entries[0].model, "custom-not-gpt");
+        let entry = &config.auto_drive.model_routing_entries[1];
         assert_eq!(entry.model, "gpt-5.3-codex");
         assert_eq!(
             entry.reasoning_levels,
@@ -3142,20 +3147,10 @@ model_verbosity = "high"
             ..Default::default()
         };
 
-        let config = Config::load_from_base_config_with_overrides(
-            cfg,
-            overrides,
-            fixture.code_home(),
-        )?;
-
-        assert!(
-            config
-                .auto_drive
-                .model_routing_entries
-                .iter()
-                .any(|entry| entry.enabled),
-            "at least one routing entry should be enabled when routing is enabled"
-        );
+        let error = Config::load_from_base_config_with_overrides(
+            cfg, overrides, fixture.code_home(),
+        ).expect_err("disabled explicit routes must not be enabled silently");
+        assert!(error.to_string().contains("explicitly enabled routing entry"));
         Ok(())
     }
 
@@ -3521,6 +3516,50 @@ mod agent_merge_tests {
     }
 
     #[test]
+    fn fresh_priority_model_configuration_has_real_context_limits() {
+        let home = TempDir::new().unwrap();
+        let config = Config::load_from_base_config_with_overrides(ConfigToml::default(),
+            ConfigOverrides { model: Some("gpt-6.1-sol".into()), ..Default::default() }, home.path().into()).unwrap();
+        assert_eq!(config.model_context_window, Some(crate::modern_models::PUBLIC_CONTEXT_WINDOW));
+        assert_eq!(config.model_auto_compact_token_limit, Some(829_800));
+    }
+
+    #[test]
+    fn fresh_oauth_priority_model_configuration_uses_backend_limits() {
+        let home = TempDir::new().unwrap();
+        let auth = crate::CodexAuth::create_dummy_chatgpt_auth_for_testing();
+        let mut json = auth.auth_dot_json.lock().unwrap().clone().unwrap();
+        json.tokens.as_mut().unwrap().id_token = crate::token_data::parse_id_token("eyJhbGciOiJub25lIn0.eyJzdWIiOiJ0ZXN0In0.c2ln").unwrap();
+        crate::auth::write_auth_json(&home.path().join("auth.json"), &json).unwrap();
+        let config = Config::load_from_base_config_with_overrides(ConfigToml::default(),
+            ConfigOverrides { model: Some("gpt-6.1-sol".into()), ..Default::default() }, home.path().into()).unwrap();
+        assert!(config.using_chatgpt_auth);
+        assert_eq!(config.model_context_window, Some(872_000));
+        assert_eq!(config.model_auto_compact_token_limit, Some(784_800));
+    }
+
+    #[test]
+    fn named_roles_with_shared_commands_preserve_models() {
+        let mut planning = agent("planning", "coder", true);
+        planning.args = vec!["--model=gpt-6.1-sol".to_string()];
+        let mut review = agent("review", "coder", true);
+        review.args = vec!["--model=gpt-6-astra".to_string()];
+        let merged = merge_with_default_agents(vec![planning, review]);
+        assert_eq!(merged.iter().find(|agent| agent.name == "planning").unwrap().args, ["--model=gpt-6.1-sol"]);
+        assert_eq!(merged.iter().find(|agent| agent.name == "review").unwrap().args, ["--model=gpt-6-astra"]);
+    }
+
+    #[test]
+    fn explicitly_configured_claude_command_and_enablement_are_preserved() {
+        let mut opus = agent("claude-opus-5-5", "/custom/bin/claude", true);
+        opus.args = vec!["--model=claude-opus-5-5".to_string()];
+        let merged = merge_with_default_agents(vec![opus]);
+        let entry = merged.iter().find(|a| a.name == "claude-opus-5-5").expect("opus present");
+        assert!(entry.enabled);
+        assert_eq!(entry.command, "/custom/bin/claude");
+    }
+
+    #[test]
     fn disabled_codex_mini_alias_is_preserved() {
         let agents = vec![agent("codex-mini", "coder", false)];
         let merged = merge_with_default_agents(agents);
@@ -3761,8 +3800,8 @@ context_mode = "1m"
         )?;
 
         assert_eq!(config.context_mode, Some(ContextMode::OneM));
-        assert_eq!(config.model_context_window, Some(272_000));
-        assert_eq!(config.model_auto_compact_token_limit, Some(244_800));
+        assert_eq!(config.model_context_window, Some(crate::modern_models::PUBLIC_CONTEXT_WINDOW));
+        assert_eq!(config.model_auto_compact_token_limit, Some(829_800));
         Ok(())
     }
 
@@ -3833,8 +3872,8 @@ context_mode = "auto"
         )?;
 
         assert_eq!(config.context_mode, Some(ContextMode::Auto));
-        assert_eq!(config.model_context_window, Some(272_000));
-        assert_eq!(config.model_auto_compact_token_limit, Some(244_800));
+        assert_eq!(config.model_context_window, Some(crate::modern_models::PUBLIC_CONTEXT_WINDOW));
+        assert_eq!(config.model_auto_compact_token_limit, Some(829_800));
         Ok(())
     }
 
@@ -3856,8 +3895,8 @@ model = "gpt-5.4"
         )?;
 
         assert_eq!(config.context_mode, Some(ContextMode::Auto));
-        assert_eq!(config.model_context_window, Some(272_000));
-        assert_eq!(config.model_auto_compact_token_limit, Some(244_800));
+        assert_eq!(config.model_context_window, Some(crate::modern_models::PUBLIC_CONTEXT_WINDOW));
+        assert_eq!(config.model_auto_compact_token_limit, Some(829_800));
         Ok(())
     }
 

@@ -48,7 +48,7 @@ const ALL_TEXT_VERBOSITY: &[TextVerbosityConfig] = &[
 ];
 
 static PRESETS: Lazy<Vec<ModelPreset>> = Lazy::new(|| {
-    vec![
+    let mut presets = vec![
         ModelPreset {
             id: "gpt-5.5".to_string(),
             model: "gpt-5.5".to_string(),
@@ -562,7 +562,26 @@ static PRESETS: Lazy<Vec<ModelPreset>> = Lazy::new(|| {
             pro_only: false,
             show_in_picker: false,
         },
-    ]
+    ];
+    presets.retain(|preset| code_core::modern_models::modern_model(&preset.id).is_none());
+    presets.extend(code_core::modern_models::MODERN_MODELS.iter().map(|spec| ModelPreset {
+        id: spec.id.to_string(),
+        model: spec.id.to_string(),
+        display_name: spec.display_name.to_string(),
+        description: spec.description.to_string(),
+        default_reasoning_effort: ReasoningEffort::Medium,
+        supported_reasoning_efforts: code_core::modern_models::reasoning_efforts(spec.id)
+            .unwrap_or_default().iter().map(|effort| ReasoningEffortPreset {
+                effort: (*effort).into(),
+                description: format!("{} reasoning effort", effort),
+            }).collect(),
+        supported_text_verbosity: ALL_TEXT_VERBOSITY,
+        is_default: false,
+        upgrade: None,
+        pro_only: false,
+        show_in_picker: true,
+    }));
+    presets
 });
 
 pub fn model_preset_available_for_auth(
@@ -594,6 +613,14 @@ pub fn builtin_model_presets(
         })
         .filter(|preset| preset.show_in_picker)
         .cloned()
+        .map(|mut preset| {
+            if auth_mode.is_some_and(AuthMode::is_chatgpt)
+                && code_core::modern_models::modern_model(&preset.model).is_some()
+            {
+                preset.supported_reasoning_efforts.retain(|effort| effort.effort != ReasoningEffort::None);
+            }
+            preset
+        })
         .collect()
 }
 
@@ -665,6 +692,18 @@ pub fn allowed_text_verbosity_for_model(model: &str) -> &'static [TextVerbosityC
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn modern_picker_entries_have_exact_ids_labels_and_max_effort() {
+        let presets = builtin_model_presets(Some(AuthMode::ApiKey), false);
+        for spec in code_core::modern_models::MODERN_MODELS {
+            let preset = presets.iter().find(|preset| preset.id == spec.id).expect("picker entry");
+            assert_eq!(preset.model, spec.id);
+            assert_eq!(preset.display_name, spec.display_name);
+            assert!(preset.supported_reasoning_efforts.iter().any(|entry| entry.effort == ReasoningEffort::Max));
+            assert!(!preset.supported_reasoning_efforts.iter().any(|entry| entry.effort == ReasoningEffort::Minimal));
+        }
+    }
 
     #[test]
     fn only_one_default_model_is_configured() {

@@ -28,7 +28,7 @@ pub(crate) fn default_responses_originator() -> String {
 }
 
 fn normalize_agent(mut agent: AgentConfig) -> AgentConfig {
-    if let Some(spec) = agent_model_spec(&agent.name).or_else(|| agent_model_spec(&agent.command)) {
+    if let Some(spec) = agent_model_spec(&agent.name) {
         agent.name = spec.slug.to_string();
         if agent.command.trim().is_empty() {
             agent.command = spec.cli.to_string();
@@ -42,7 +42,6 @@ fn normalize_agent(mut agent: AgentConfig) -> AgentConfig {
 
 fn canonical_agent_key(agent: &AgentConfig) -> String {
     agent_model_spec(&agent.name)
-        .or_else(|| agent_model_spec(&agent.command))
         .map(|spec| spec.slug.to_ascii_lowercase())
         .unwrap_or_else(|| agent.name.to_ascii_lowercase())
 }

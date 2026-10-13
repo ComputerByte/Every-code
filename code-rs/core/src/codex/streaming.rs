@@ -1669,6 +1669,15 @@ async fn capture_review_snapshot(session: &Session) -> Option<ReviewSnapshotInfo
 
 fn is_context_overflow_stream_error(message: &str) -> bool {
     let lower = message.to_ascii_lowercase();
+    // A rejected context-related parameter is not an exhausted conversation.
+    if lower.contains("unsupported")
+        || lower.contains("not supported")
+        || lower.contains("invalid parameter")
+        || lower.contains("invalid value")
+        || lower.contains("invalid model")
+    {
+        return false;
+    }
     lower.contains("exceeds the context window")
         || lower.contains("exceed the context window")
         || lower.contains("context length exceeded")
@@ -1678,6 +1687,35 @@ fn is_context_overflow_stream_error(message: &str) -> bool {
                 || lower.contains("exceeded")
                 || lower.contains("full")
                 || lower.contains("too long")))
+}
+
+fn is_context_overflow_model_error(error: &CodexErr) -> bool {
+    match error {
+        CodexErr::Stream(message, _, _) => {
+            if let Ok(body) = serde_json::from_str::<serde_json::Value>(message) {
+                match body["error"]["code"].as_str() {
+                    Some(code) => code == "context_length_exceeded",
+                    None => is_context_overflow_stream_error(message),
+                }
+            } else {
+                is_context_overflow_stream_error(message)
+            }
+        }
+        CodexErr::UnexpectedStatus(response) if response.status == reqwest::StatusCode::BAD_REQUEST => {
+            if let Ok(body) = serde_json::from_str::<serde_json::Value>(&response.body) {
+                let error = &body["error"];
+                match error["code"].as_str() {
+                    Some("context_length_exceeded") => true,
+                    Some(_) => false,
+                    _ => error["param"].as_str().is_none()
+                        && error["message"].as_str().is_some_and(is_context_overflow_stream_error),
+                }
+            } else {
+                is_context_overflow_stream_error(&response.body)
+            }
+        }
+        _ => false,
+    }
 }
 
 fn is_usage_limit_stream_error(message: &str) -> bool {
@@ -3401,6 +3439,10 @@ async fn run_turn(
             }
             Err(CodexErr::QuotaExceeded) => return Err(CodexErr::QuotaExceeded),
             Err(e) => {
+                let context_overflow = is_context_overflow_model_error(&e);
+                if !context_overflow && crate::error::non_retryable_model_error(&e) {
+                    return Err(e);
+                }
                 if let CodexErr::Stream(msg, _maybe_delay, _req_id) = &e
                     && is_usage_limit_stream_error(msg)
                     && !did_usage_limit_model_fallback
@@ -3427,9 +3469,7 @@ async fn run_turn(
                     }
                 }
 
-                if let CodexErr::Stream(msg, _maybe_delay, _req_id) = &e
-                    && is_context_overflow_stream_error(msg)
-                {
+                if context_overflow {
                     if !did_auto_compact {
                         did_auto_compact = true;
                         sess

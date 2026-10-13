@@ -1575,10 +1575,15 @@ async fn execute_model_with_permissions(
 ) -> Result<String, String> {
     let spec_opt = agent_model_spec(model)
         .or_else(|| config.as_ref().and_then(|cfg| agent_model_spec(&cfg.name)))
-        .or_else(|| config.as_ref().and_then(|cfg| agent_model_spec(&cfg.command)));
+;
 
     if let Some(spec) = spec_opt {
-        if !spec.is_enabled() {
+        let explicit_opus = spec.slug == "claude-opus-5-5"
+            && config.as_ref().is_some_and(|cfg| cfg.enabled);
+        if !spec.is_enabled() && !explicit_opus {
+            if spec.slug == "claude-opus-5-5" {
+                return Err("claude-opus-5-5 is unverified and disabled by default; verify Claude Code >=2.1.280 and model access, then configure an explicitly enabled Claude agent".to_string());
+            }
             if let Some(flag) = spec.gating_env {
                 return Err(format!(
                     "agent model '{}' is disabled; set {}=1 to enable it",
@@ -1618,7 +1623,8 @@ async fn execute_model_with_permissions(
     // `codex` binary to be present on PATH. This improves portability,
     // especially on Windows where global shims may be missing.
     let model_lower = model.to_lowercase();
-    let command_lower = command_for_spawn.to_ascii_lowercase();
+    let command_lower = PathBuf::from(&command_for_spawn).file_name()
+        .and_then(|name| name.to_str()).unwrap_or(&command_for_spawn).to_ascii_lowercase();
     fn is_known_family(s: &str) -> bool {
         matches!(
             s,
@@ -1635,17 +1641,21 @@ async fn execute_model_with_permissions(
         )
     }
 
-    let slug_for_defaults = spec_opt.map(|spec| spec.slug).unwrap_or(model);
     let spec_family = spec_opt.map(|spec| spec.family);
     let family = if let Some(spec_family) = spec_family {
         spec_family
     } else if is_known_family(model_lower.as_str()) {
         model_lower.as_str()
+    } else if command_lower == "coder" || command_lower == "codex" {
+        "code"
     } else if is_known_family(command_lower.as_str()) {
         command_lower.as_str()
     } else {
         model_lower.as_str()
     };
+    // Roles have no catalog slug. Select mode defaults by the resolved CLI
+    // family, without importing its default model or replacing the executable.
+    let slug_for_defaults = spec_opt.map(|spec| spec.slug).unwrap_or(family);
 
     let command_missing = !external_agent_command_exists(&command_for_spawn);
     let use_current_exe = should_use_current_exe_for_agent(family, command_missing, config.as_ref());
@@ -1666,9 +1676,11 @@ async fn execute_model_with_permissions(
         }
     }
 
-    strip_model_flags(&mut final_args);
+    let explicit_model_args = take_model_flags(&mut final_args)?;
 
-    let spec_model_args: Vec<String> = if let Some(spec) = spec_opt {
+    let spec_model_args: Vec<String> = if !explicit_model_args.is_empty() {
+        explicit_model_args
+    } else if let Some(spec) = spec_opt {
         spec.model_args.iter().map(|arg| (*arg).to_string()).collect()
     } else {
         Vec::new()
@@ -1676,18 +1688,10 @@ async fn execute_model_with_permissions(
 
     let built_in_cloud = family == "cloud" && config.is_none();
 
-    // Clamp reasoning effort to what the target model supports.
-    let clamped_effort = match reasoning_effort {
-        code_protocol::config_types::ReasoningEffort::XHigh => {
-            let lower = slug_for_defaults.to_ascii_lowercase();
-            if lower.contains("max") {
-                reasoning_effort
-            } else {
-                code_protocol::config_types::ReasoningEffort::High
-            }
-        }
-        other => other,
-    };
+    // Match the actual selected model, including explicit configuration overrides.
+    let selected_model = spec_model_args.get(1).map(String::as_str).unwrap_or(model);
+    let clamped_effort: code_protocol::config_types::ReasoningEffort =
+        crate::reasoning::clamp_reasoning_effort_for_model(selected_model, reasoning_effort.clone().into()).into();
 
     // Configuration overrides for Codex CLI families. External CLIs (claude,
     // gemini, antigravity, copilot, qwen) do not understand our config flags,
@@ -1716,6 +1720,20 @@ async fn execute_model_with_permissions(
             strip_model_flags(&mut defaults);
             final_args.extend(defaults);
             final_args.extend(spec_model_args.iter().cloned());
+            if family == "claude" && matches!(selected_model,
+                "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5")
+                && !final_args.iter().any(|arg| arg == "--effort" || arg.starts_with("--effort="))
+            {
+                let effort = match reasoning_effort {
+                    code_protocol::config_types::ReasoningEffort::Low => "low",
+                    code_protocol::config_types::ReasoningEffort::Medium => "medium",
+                    code_protocol::config_types::ReasoningEffort::High => "high",
+                    code_protocol::config_types::ReasoningEffort::XHigh => "xhigh",
+                    code_protocol::config_types::ReasoningEffort::Max => "max",
+                    _ => return Err(format!("Claude model '{selected_model}' supports low, medium, high, xhigh, or max effort through this CLI")),
+                };
+                final_args.extend(["--effort".to_string(), effort.to_string()]);
+            }
             final_args.push("-p".into());
             final_args.push(prompt.to_string());
         }
@@ -2122,6 +2140,28 @@ fn resolve_program_path(use_current_exe: bool, command_for_spawn: &str) -> Resul
     }
 
     Ok(std::path::PathBuf::from(command_for_spawn))
+}
+
+// Return one explicit model override and remove it from the mode arguments.
+fn take_model_flags(args: &mut Vec<String>) -> Result<Vec<String>, String> {
+    let mut selected = None;
+    let mut retained = Vec::new();
+    let mut iter = args.drain(..);
+    while let Some(arg) = iter.next() {
+        let value = if arg == "--model" || arg == "-m" {
+            Some(iter.next().ok_or_else(|| format!("{arg} requires a model identifier"))?)
+        } else {
+            arg.strip_prefix("--model=").or_else(|| arg.strip_prefix("-m=")).map(str::to_string)
+        };
+        if let Some(value) = value {
+            if value.trim().is_empty() { return Err("model identifier must not be empty".to_string()); }
+            if selected.is_some() { return Err("multiple agent model overrides; configure exactly one --model".to_string()); }
+            selected = Some(value);
+        } else { retained.push(arg); }
+    }
+    drop(iter);
+    *args = retained;
+    Ok(selected.map(|model| vec!["--model".to_string(), model]).unwrap_or_default())
 }
 
 fn strip_model_flags(args: &mut Vec<String>) {
@@ -3025,6 +3065,120 @@ mod tests {
         .expect("execute claude with local fallback");
 
         assert_eq!(output.trim(), "local-claude");
+    }
+
+    #[tokio::test]
+    async fn unverified_opus_requires_explicit_agent_configuration() {
+        let error = execute_model_with_permissions("mock-agent", "claude-opus-5-5", "task", true,
+            None, None, ReasoningEffort::High, None, None, None).await.unwrap_err();
+        assert!(error.contains("disabled by default"));
+        assert!(error.contains("2.1.280"));
+    }
+
+    #[tokio::test]
+    async fn modern_claude_agents_launch_exact_ids_and_effort() {
+        for model in ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"] {
+            let dir = tempdir().expect("tempdir");
+            let executable = script_path(dir.path(), "claude");
+            write_argv_script(&executable);
+            let mut cfg = agent_with_command(executable.to_str().expect("path"));
+            cfg.name = model.to_string();
+            let output = execute_model_with_permissions("mock-agent", model, "task", true,
+                None, Some(cfg), ReasoningEffort::Max, None, None, None).await.expect("launch");
+            let args: Vec<&str> = output.trim().split('|').collect();
+            let model_index = args.iter().position(|arg| *arg == "--model").expect("model argument");
+            assert_eq!(args[model_index + 1], model);
+            let effort_index = args.iter().position(|arg| *arg == "--effort").expect("effort argument");
+            assert_eq!(args[effort_index + 1], "max");
+            assert!(args.contains(&"--allowedTools"));
+            assert!(args.contains(&"-p"));
+        }
+    }
+
+    #[tokio::test]
+    async fn configured_agent_role_preserves_exact_model_override() {
+        let dir = tempdir().expect("tempdir");
+        let executable = script_path(dir.path(), "claude");
+        write_argv_script(&executable);
+        let mut cfg = agent_with_command(executable.to_str().expect("path"));
+        cfg.name = "investigation".to_string();
+        cfg.args = vec!["--model=claude-sonnet-5-5".to_string()];
+        let output = execute_model_with_permissions("mock-agent", "investigation", "task", true,
+            None, Some(cfg), ReasoningEffort::Low, None, None, None).await.expect("launch");
+        assert!(output.contains("--model|claude-sonnet-5-5"));
+        assert!(output.contains("--effort|low"));
+        assert!(output.contains("-p|task"));
+        assert!(!output.contains("--model|sonnet"));
+        assert!(output.contains("--allowedTools|"));
+    }
+
+    #[tokio::test]
+    async fn role_agents_preserve_mode_arguments_in_subprocess() {
+        for name in ["claude-sonnet-5-5", "review", "investigation", "architecture"] {
+            let dir = tempdir().expect("tempdir");
+            let executable = script_path(dir.path(), "claude");
+            write_argv_script(&executable);
+            let mut cfg = agent_with_command(executable.to_str().expect("path"));
+            cfg.name = name.to_string();
+            cfg.args = vec!["--model=claude-haiku-5-5".to_string()];
+            cfg.args_read_only = Some(vec![
+                "--model=claude-sonnet-5-5".to_string(),
+                "--permission-mode".to_string(),
+                "default".to_string(),
+            ]);
+            cfg.args_write = Some(vec!["--model=claude-haiku-5-5".to_string()]);
+            for read_only in [true, false] {
+                let output = execute_model_with_permissions(
+                    "mock-agent", name, "task", read_only, Some(dir.path().to_path_buf()),
+                    Some(cfg.clone()), ReasoningEffort::Low, None, None, None,
+                ).await.expect("launch explicit executable");
+                let args: Vec<&str> = output.trim().split('|').collect();
+                assert_eq!(args.contains(&"--allowedTools"), read_only, "{name}: {args:?}");
+                assert_eq!(args.contains(&"--permission-mode"), read_only);
+                assert_eq!(args.contains(&"--dangerously-skip-permissions"), !read_only);
+                let model = if read_only { "claude-sonnet-5-5" } else { "claude-haiku-5-5" };
+                assert!(output.contains(&format!("--model|{model}")));
+                assert!(output.contains("--effort|low|-p|task"));
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn explicitly_configured_claude_opus_agent_executes_custom_command() {
+        let dir = tempdir().expect("tempdir");
+        let executable = script_path(dir.path(), "claude");
+        write_argv_script(&executable);
+        let mut cfg = agent_with_command(executable.to_str().expect("path"));
+        cfg.name = "claude-opus-5-5".to_string();
+        cfg.enabled = true;
+        let output = execute_model_with_permissions("mock-agent", "claude-opus-5-5", "task", true,
+            None, Some(cfg), ReasoningEffort::High, None, None, None).await.expect("launch");
+        let args: Vec<&str> = output.trim().split('|').collect();
+        let model_index = args.iter().position(|arg| *arg == "--model").expect("model argument");
+        assert_eq!(args[model_index + 1], "claude-opus-5-5");
+        let effort_index = args.iter().position(|arg| *arg == "--effort").expect("effort argument");
+        assert_eq!(args[effort_index + 1], "high");
+        assert!(args.contains(&"--allowedTools"));
+        assert!(args.contains(&"-p"));
+    }
+
+    #[tokio::test]
+    async fn gpt_6_1_agent_launch_preserves_max_and_explicit_override() {
+        let dir = tempdir().expect("tempdir");
+        let executable = script_path(dir.path(), "mock-coder");
+        write_argv_script(&executable);
+        let mut cfg = agent_with_command(executable.to_str().expect("path"));
+        cfg.name = "code-gpt-6.1-sol".to_string();
+        let output = execute_model_with_permissions("mock-agent", "code-gpt-6.1-sol", "task", true,
+            None, Some(cfg.clone()), ReasoningEffort::Max, None, None, None).await.expect("launch");
+        assert!(output.contains("--model|gpt-6.1-sol"));
+        assert!(output.contains("model_reasoning_effort=max"));
+        assert!(!output.contains("--model|gpt-6-sol"));
+        cfg.args = vec!["--model".to_string(), "gpt-6-luna".to_string()];
+        let output = execute_model_with_permissions("mock-agent", "code-gpt-6.1-sol", "task", true,
+            None, Some(cfg), ReasoningEffort::High, None, None, None).await.expect("override launch");
+        assert!(output.contains("--model|gpt-6-luna"));
+        assert!(!output.contains("--model|gpt-6.1-sol"));
     }
 
     #[tokio::test]

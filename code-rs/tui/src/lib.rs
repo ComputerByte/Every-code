@@ -1254,6 +1254,8 @@ fn reasoning_effort_to_str(effort: ReasoningEffort) -> &'static str {
         ReasoningEffort::Medium => "medium",
         ReasoningEffort::High => "high",
         ReasoningEffort::XHigh => "xhigh",
+        ReasoningEffort::Max => "max",
+        ReasoningEffort::Disabled => "none",
         ReasoningEffort::None => "none",
     }
 }

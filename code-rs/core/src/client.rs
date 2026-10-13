@@ -1,3 +1,4 @@
+use crate::error::non_retryable_model_error;
 use std::collections::BTreeMap;
 use std::io::BufRead;
 use std::path::Path;
@@ -372,6 +373,7 @@ impl ModelClient {
         match self.provider.wire_api {
             WireApi::ResponsesWebsocket => Some(preferred_ws_version_from_env()),
             WireApi::Responses => {
+                if !self.uses_first_party_openai_model_metadata() { return None; }
                 let prefer_websockets = prompt
                     .model_family_override
                     .as_ref()
@@ -401,8 +403,24 @@ impl ModelClient {
         mut family: ModelFamily,
     ) -> ModelFamily {
         if !self.uses_first_party_openai_model_metadata() {
+            if crate::modern_models::modern_model(&family.slug).is_some() {
+                let slug = family.slug.clone();
+                family = crate::model_family::derive_provider_model_family(&slug);
+                family.supports_reasoning_summaries = self.config.model_family.supports_reasoning_summaries
+                    && self.config.model_family.slug == slug
+                    && !self.config.model_family.use_responses_lite;
+            }
             family.use_responses_lite = false;
             family.prefer_websockets = false;
+        } else if !self.auth_manager.as_ref().and_then(|manager| manager.auth())
+            .is_some_and(|auth| auth.mode.is_chatgpt())
+        {
+            // Public API keys use public Responses semantics. Lite is a Codex
+            // backend contract, not a capability implied by the model slug.
+            family.use_responses_lite = false;
+            if crate::modern_models::modern_model(&family.slug).is_some() {
+                family.context_window = Some(crate::modern_models::PUBLIC_CONTEXT_WINDOW);
+            }
         }
         family
     }
@@ -412,7 +430,7 @@ impl ModelClient {
         // compatibility check identifies the one built-in first-party path;
         // proxy/custom endpoints must not inherit embedded OpenAI capabilities.
         self.config.model_provider_id == "openai"
-            && self.provider.is_public_openai_responses_endpoint()
+            && self.provider.uses_official_openai_model_catalog()
     }
 
     fn model_family_for_request(&self, prompt: &Prompt, model: &str) -> ModelFamily {
@@ -450,10 +468,13 @@ impl ModelClient {
         req_builder: reqwest::RequestBuilder,
         model: &str,
     ) -> reqwest::RequestBuilder {
-        req_builder.headers(crate::default_client::requested_model_headers(
-            Some(self.config.responses_originator_header.as_str()),
-            model,
-        ))
+        let originator = Some(self.config.responses_originator_header.as_str());
+        let backend = self.uses_first_party_openai_model_metadata()
+            && self.auth_manager.as_ref().and_then(|manager| manager.auth()).is_some_and(|auth| auth.uses_codex_backend());
+        let headers = if backend {
+            crate::default_client::requested_codex_backend_model_headers(originator, model)
+        } else { crate::default_client::requested_model_headers(originator, model) };
+        req_builder.headers(headers)
     }
 
     /// Attach session-correlation headers for prompt-cache and gateway routing.
@@ -480,14 +501,10 @@ impl ModelClient {
         family: &ModelFamily,
         effort: ReasoningEffortConfig,
     ) -> Option<crate::client_common::Reasoning> {
-        if self.reasoning_summary_disabled.load(Ordering::Relaxed) {
-            return None;
-        }
-
         create_reasoning_param_for_request(
             family,
             Some(effort),
-            self.summary,
+            self.get_reasoning_summary(),
         )
     }
 
@@ -692,9 +709,14 @@ impl ModelClient {
     }
 
     pub fn get_auto_compact_token_limit(&self) -> Option<i64> {
-        self.config
-            .model_auto_compact_token_limit
-            .or_else(|| self.config.model_family.auto_compact_token_limit())
+        let limit = self.config.model_auto_compact_token_limit
+            .or_else(|| self.config.model_family.auto_compact_token_limit());
+        if self.uses_first_party_openai_model_metadata()
+            && crate::modern_models::modern_model(&self.config.model).is_some()
+            && self.auth_manager.as_ref().and_then(|manager| manager.auth()).is_some_and(|auth| auth.mode.is_chatgpt())
+        {
+            limit.map(|limit| limit.min((crate::modern_models::CODEX_MAX_CONTEXT_WINDOW * 9 / 10) as i64))
+        } else { limit }
     }
 
     pub fn get_context_mode(&self) -> Option<ContextMode> {
@@ -717,6 +739,22 @@ impl ModelClient {
         let log_tag = env_log_tag
             .as_deref()
             .or(prompt.log_tag.as_deref());
+        let model = prompt.model_override.as_deref().unwrap_or(&self.config.model);
+        if self.config.model_provider_id == "openai"
+            && (self.provider.uses_official_openai_model_catalog() || self.provider.is_public_openai_chat_endpoint())
+        {
+            if model.starts_with("claude-") {
+                return Err(CodexErr::UnsupportedOperation(format!("'{model}' is an Anthropic model; use a configured Claude agent or an explicitly compatible proxy provider")));
+            }
+            if (model.starts_with("gpt-6") || model.starts_with("gpt-5.6"))
+                && crate::modern_models::modern_model(model).is_none()
+            {
+                return Err(CodexErr::UnsupportedOperation(format!("unverified OpenAI model '{model}'; select an exact model from the catalog or configure its provider explicitly")));
+            }
+            if self.provider.wire_api == WireApi::Chat && model.starts_with("gpt-6") && !prompt.tools.is_empty() {
+                return Err(CodexErr::UnsupportedOperation(format!("'{model}' tool calling requires the Responses path in Every Code; set wire_api = 'responses'")));
+            }
+        }
         match self.provider.wire_api {
             WireApi::Responses => {
                 if let Some(ws_version) = self.active_ws_version_for_prompt(prompt) {
@@ -726,6 +764,7 @@ impl ModelClient {
                     {
                         Ok(stream) => Ok(stream),
                         Err(err) => {
+                            if non_retryable_model_error(&err) { return Err(err); }
                             self.websockets_disabled.store(true, Ordering::Relaxed);
                             warn!(
                                 "preferred websocket transport failed; falling back to responses HTTP stream: {err}"
@@ -759,6 +798,7 @@ impl ModelClient {
                 {
                     Ok(stream) => Ok(stream),
                     Err(err) => {
+                        if non_retryable_model_error(&err) { return Err(err); }
                         self.websockets_disabled.store(true, Ordering::Relaxed);
                         warn!(
                             "responses_websocket transport failed; falling back to responses HTTP stream: {err}"
@@ -826,6 +866,18 @@ impl ModelClient {
         log_tag: Option<&str>,
         ws_version: ResponsesWebsocketVersion,
     ) -> Result<ResponseStream> {
+        let model = prompt.model_override.as_deref().unwrap_or(&self.config.model);
+        let family = self.model_family_for_request(prompt, model);
+        self.stream_responses_websocket_for_family(prompt, log_tag, ws_version, family).await
+    }
+
+    async fn stream_responses_websocket_for_family(
+        &self,
+        prompt: &Prompt,
+        log_tag: Option<&str>,
+        ws_version: ResponsesWebsocketVersion,
+        request_family: ModelFamily,
+    ) -> Result<ResponseStream> {
         let auth_manager = self.auth_manager.clone();
         let auth_mode = auth_manager
             .as_ref()
@@ -837,8 +889,10 @@ impl ModelClient {
             .model_override
             .as_deref()
             .unwrap_or(self.config.model.as_str());
-        let effective_effort = clamp_reasoning_effort_for_model(request_model, self.effort);
-        let request_family = self.model_family_for_request(prompt, request_model);
+        let mut effective_effort = clamp_reasoning_effort_for_model(request_model, self.effort);
+        if auth_mode.is_some_and(|mode| mode.is_chatgpt()) && effective_effort == ReasoningEffortConfig::Disabled {
+            effective_effort = ReasoningEffortConfig::Low;
+        }
         let store = should_store_responses(prompt, &self.provider, &request_family);
 
         let full_instructions = prompt.get_full_instructions(&request_family);
@@ -917,6 +971,7 @@ impl ModelClient {
         let turn_state: Arc<OnceLock<String>> = Arc::new(OnceLock::new());
         let mut attempt = 0;
         let max_retries = self.provider.request_max_retries();
+        let mut did_refresh_auth = false;
         let mut request_id = String::new();
 
         loop {
@@ -1009,7 +1064,7 @@ impl ModelClient {
                 .map_or(false, |req| req.headers().contains_key("OpenAI-Beta"));
 
             if !has_beta_header {
-                let beta_value = if self.provider.is_public_openai_responses_endpoint() {
+                let beta_value = if self.provider.uses_official_openai_model_catalog() {
                     RESPONSES_BETA_HEADER_V1
                 } else {
                     RESPONSES_BETA_HEADER_EXPERIMENTAL
@@ -1260,6 +1315,51 @@ impl ModelClient {
                         return self.stream_responses(prompt, log_tag).await;
                     }
 
+                    if let WsError::Http(response) = &err {
+                        // Recover only stored ChatGPT OAuth used by the OpenAI
+                        // route. Custom-provider credentials remain provider-owned.
+                        if response.status() == StatusCode::UNAUTHORIZED
+                            && self.config.model_provider_id == "openai"
+                            && self.provider.requires_openai_auth
+                            && auth.as_ref().is_some_and(|auth| auth.mode == AuthMode::ChatGPT)
+                        {
+                            if did_refresh_auth {
+                                return Err(CodexErr::AuthRefreshPermanent(
+                                    "Credentials were rejected after refresh; please sign in again.".to_string(),
+                                ));
+                            }
+                            did_refresh_auth = true;
+                            let manager = auth_manager.as_ref().ok_or_else(|| {
+                                CodexErr::AuthRefreshPermanent(AUTH_REQUIRED_MESSAGE.to_string())
+                            })?;
+                            match manager.refresh_token_classified().await {
+                                Ok(Some(_)) => continue,
+                                Ok(None) => return Err(CodexErr::AuthRefreshPermanent(
+                                    AUTH_REQUIRED_MESSAGE.to_string(),
+                                )),
+                                Err(error) if error.is_permanent() => {
+                                    return Err(CodexErr::AuthRefreshPermanent(error.message));
+                                }
+                                Err(_) => return Err(CodexErr::UnexpectedStatus(UnexpectedResponseError {
+                                    status: StatusCode::UNAUTHORIZED,
+                                    body: "Credential refresh failed; retry or sign in again.".to_string(),
+                                    request_id: Some(request_id.clone()),
+                                })),
+                            }
+                        }
+                        if matches!(response.status(), StatusCode::NOT_FOUND | StatusCode::METHOD_NOT_ALLOWED) {
+                            self.websockets_disabled.store(true, Ordering::Relaxed);
+                            return self.stream_responses(prompt, log_tag).await;
+                        }
+                        if response.status().is_client_error()
+                            && !matches!(response.status(), StatusCode::TOO_MANY_REQUESTS | StatusCode::NOT_FOUND | StatusCode::METHOD_NOT_ALLOWED) {
+                            return Err(CodexErr::UnexpectedStatus(UnexpectedResponseError {
+                                status: response.status(),
+                                body: response.body().as_ref().map(|body| String::from_utf8_lossy(body).into_owned()).unwrap_or_default(),
+                                request_id: Some(request_id.clone()),
+                            }));
+                        }
+                    }
                     let err = CodexErr::Stream(
                         format!("[ws] failed to connect: {err}"),
                         None,
@@ -1294,6 +1394,17 @@ impl ModelClient {
 
     /// Implementation for the OpenAI *Responses* experimental API.
     async fn stream_responses(&self, prompt: &Prompt, log_tag: Option<&str>) -> Result<ResponseStream> {
+        let model = prompt.model_override.as_deref().unwrap_or(&self.config.model);
+        let family = self.model_family_for_request(prompt, model);
+        self.stream_responses_for_family(prompt, log_tag, family).await
+    }
+
+    async fn stream_responses_for_family(
+        &self,
+        prompt: &Prompt,
+        log_tag: Option<&str>,
+        request_family: ModelFamily,
+    ) -> Result<ResponseStream> {
         if let Some(path) = &*CODEX_RS_SSE_FIXTURE {
             // short circuit for tests
             warn!(path, "Streaming from fixture");
@@ -1315,8 +1426,10 @@ impl ModelClient {
             .model_override
             .as_deref()
             .unwrap_or(self.config.model.as_str());
-        let effective_effort = clamp_reasoning_effort_for_model(request_model, self.effort);
-        let request_family = self.model_family_for_request(prompt, request_model);
+        let mut effective_effort = clamp_reasoning_effort_for_model(request_model, self.effort);
+        if auth_mode.is_some_and(|mode| mode.is_chatgpt()) && effective_effort == ReasoningEffortConfig::Disabled {
+            effective_effort = ReasoningEffortConfig::Low;
+        }
         let store = should_store_responses(prompt, &self.provider, &request_family);
 
         let full_instructions = prompt.get_full_instructions(&request_family);
@@ -1500,7 +1613,7 @@ impl ModelClient {
                 .map_or(false, |req| req.headers().contains_key("OpenAI-Beta"));
 
             if !has_beta_header {
-                let beta_value = if self.provider.is_public_openai_responses_endpoint() {
+                let beta_value = if self.provider.uses_official_openai_model_catalog() {
                     RESPONSES_BETA_HEADER_V1
                 } else {
                     RESPONSES_BETA_HEADER_EXPERIMENTAL
@@ -2081,7 +2194,12 @@ impl ModelClient {
 
     #[allow(dead_code)]
     pub fn get_model_context_window(&self) -> Option<u64> {
-        self.config.model_context_window
+        let window = self.config.model_context_window;
+        if self.uses_first_party_openai_model_metadata()
+            && crate::modern_models::modern_model(&self.config.model).is_some()
+            && self.auth_manager.as_ref().and_then(|manager| manager.auth()).is_some_and(|auth| auth.mode.is_chatgpt())
+        { window.map(|limit| limit.min(crate::modern_models::CODEX_MAX_CONTEXT_WINDOW)) }
+        else { window }
     }
 
     #[allow(dead_code)]
@@ -2149,7 +2267,7 @@ impl ModelClient {
                 .map_or(false, |req| req.headers().contains_key("OpenAI-Beta"));
 
             if !has_beta_header {
-                let beta_value = if self.provider.is_public_openai_responses_endpoint() {
+                let beta_value = if self.provider.uses_official_openai_model_catalog() {
                     RESPONSES_BETA_HEADER_V1
                 } else {
                     RESPONSES_BETA_HEADER_EXPERIMENTAL
@@ -2350,6 +2468,23 @@ fn map_wrapped_websocket_error_event(event: WrappedWebsocketErrorEvent) -> Optio
                 let message = error
                     .message
                     .unwrap_or_else(|| "websocket returned an error event".to_string());
+                if error.r#type.as_deref() == Some("invalid_request_error")
+                    || matches!(error.code.as_deref(), Some("context_length_exceeded" | "model_not_found" | "unsupported_model" | "invalid_value" | "invalid_enum_value" | "unsupported_parameter" | "unsupported_value"))
+                {
+                    return Some(CodexErr::UnexpectedStatus(UnexpectedResponseError {
+                        status: StatusCode::BAD_REQUEST,
+                        body: serde_json::json!({"error": {
+                            "type": error.r#type, "code": error.code,
+                            "param": error.param, "message": message,
+                        }}).to_string(),
+                        request_id: None,
+                    }));
+                }
+                let message = if error.code.is_some() {
+                    serde_json::json!({"error": {"code": error.code, "message": message}}).to_string()
+                } else {
+                    message
+                };
                 return Some(CodexErr::Stream(message, None, None));
             }
             return Some(CodexErr::Stream(
@@ -2692,7 +2827,14 @@ fn header_map_to_json(headers: &HeaderMap) -> Value {
     let mut ordered: BTreeMap<String, Vec<String>> = BTreeMap::new();
     for (name, value) in headers.iter() {
         let entry = ordered.entry(name.as_str().to_string()).or_default();
-        entry.push(value.to_str().unwrap_or_default().to_string());
+        // Diagnostic snapshots must never persist authentication material.
+        let sensitive = value.is_sensitive() || matches!(name.as_str(),
+            "authorization" | "proxy-authorization" | "cookie" | "api-key" | "x-api-key");
+        entry.push(if sensitive {
+            "[REDACTED]".to_string()
+        } else {
+            value.to_str().unwrap_or_default().to_string()
+        });
     }
 
     serde_json::to_value(ordered).unwrap_or(Value::Null)
@@ -2772,11 +2914,14 @@ async fn process_sse<S>(
             Ok(Some(Ok(sse))) => sse,
             Ok(Some(Err(e))) => {
                 debug!("SSE Error: {e:#}");
-                let event = CodexErr::Stream(
-                    format!("[transport] {e}"),
-                    None,
-                    Some(request_id.clone()),
-                );
+                let event = match e {
+                    eventsource_stream::EventStreamError::Transport(error) => error,
+                    other => CodexErr::Stream(
+                        format!("[transport] {other}"),
+                        None,
+                        Some(request_id.clone()),
+                    ),
+                };
                 let _ = tx_event.send(Err(event)).await;
                 return;
             }
@@ -3105,6 +3250,14 @@ async fn process_sse<S>(
                                         retry_after,
                                         Some(request_id.clone()),
                                     ));
+                                } else if error.r#type.as_deref() == Some("invalid_request_error")
+                                    || matches!(error.code.as_deref(), Some("context_length_exceeded" | "model_not_found" | "unsupported_model" | "invalid_value" | "invalid_enum_value" | "unsupported_parameter" | "unsupported_value"))
+                                {
+                                    response_error = Some(CodexErr::UnexpectedStatus(UnexpectedResponseError {
+                                        status: StatusCode::BAD_REQUEST,
+                                        body: serde_json::json!({"error": {"message": error.message, "code": error.code, "param": error.param}}).to_string(),
+                                        request_id: Some(request_id.clone()),
+                                    }));
                                 } else if is_quota_exceeded_error(&error) {
                                     response_error = Some(CodexErr::QuotaExceeded);
                                 } else if is_server_overloaded_error(&error) {
@@ -3113,7 +3266,11 @@ async fn process_sse<S>(
                                     response_error = Some(CodexErr::ContentFilter);
                                 } else {
                                     let retry_after = try_parse_retry_after(&error, Utc::now());
-                                    let message = error.message.unwrap_or_default();
+                                    let message = if error.code.is_some() {
+                                        serde_json::json!({"error": {"code": error.code, "message": error.message}}).to_string()
+                                    } else {
+                                        error.message.unwrap_or_default()
+                                    };
                                     response_error = Some(CodexErr::Stream(
                                         message,
                                         retry_after,
@@ -4650,9 +4807,10 @@ mod tests {
         let mapped =
             map_wrapped_websocket_error_event(wrapped).expect("error should map without status");
         match mapped {
-            CodexErr::Stream(message, None, None) => {
+            CodexErr::UnexpectedStatus(UnexpectedResponseError { status, body: message, .. }) => {
+                assert_eq!(status, StatusCode::BAD_REQUEST);
                 assert_eq!(
-                    message,
+                    serde_json::from_str::<Value>(&message).expect("error envelope")["error"]["message"],
                     "The requested model 'gpt-5.3-codex-spark' does not exist."
                 );
             }
@@ -4660,3 +4818,7 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "client_model_tests.rs"]
+mod model_tests;

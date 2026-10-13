@@ -155,9 +155,29 @@ pub fn wire_compatible_version_for_model(model: &str) -> String {
     max_semver(wire_compatible_version(), required_version).to_string()
 }
 
+/// Verified current Codex backend protocol; public/proxy headers stay unchanged.
+pub fn codex_backend_version_for_model(model: &str) -> String {
+    let canonical_model = model.rsplit('/').next().unwrap_or(model).trim();
+    // The bundled catalog's 0.153 minimum is stale for these releases.
+    // Verified against the released Codex 0.162.1 contract and a live
+    // GPT-6.1 Sol OAuth request on 2026-10-09; 0.153 receives model-not-supported.
+    if matches!(canonical_model, "gpt-6.1-sol" | "gpt-6-astra" | "gpt-6-sol" | "gpt-6-luna"
+        | "gpt-5.6-sol" | "gpt-5.6-terra" | "gpt-5.6-luna")
+    {
+        return max_semver(&wire_compatible_version_for_model(model), "0.162.1").to_string();
+    }
+    wire_compatible_version_for_model(model)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn priority_model_uses_verified_modern_protocol_floor() {
+        assert_eq!(codex_backend_version_for_model("gpt-6.1-sol"), max_semver(wire_compatible_version(), "0.162.1"));
+        assert_eq!(codex_backend_version_for_model("gpt-6-sol"), max_semver(wire_compatible_version(), "0.162.1"));
+    }
 
     #[test]
     fn wire_compat_clamps_old_versions() {

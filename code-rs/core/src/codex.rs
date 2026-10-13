@@ -165,6 +165,8 @@ impl ConfirmGuardPatternRuntime {
 fn to_proto_reasoning_effort(effort: ReasoningEffortConfig) -> ProtoReasoningEffort {
     match effort {
         ReasoningEffortConfig::Minimal => ProtoReasoningEffort::Minimal,
+        ReasoningEffortConfig::Disabled => ProtoReasoningEffort::None,
+        ReasoningEffortConfig::Max => ProtoReasoningEffort::Max,
         ReasoningEffortConfig::Low => ProtoReasoningEffort::Low,
         ReasoningEffortConfig::Medium => ProtoReasoningEffort::Medium,
         ReasoningEffortConfig::High => ProtoReasoningEffort::High,

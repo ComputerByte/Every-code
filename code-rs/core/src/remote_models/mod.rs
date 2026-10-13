@@ -418,7 +418,11 @@ impl RemoteModelsManager {
                     pairs.append_pair(k, v);
                 }
             }
-            pairs.append_pair("client_version", &format_client_version_to_whole());
+            let version = if self.provider.uses_official_openai_model_catalog()
+                && auth.as_ref().is_some_and(CodexAuth::uses_codex_backend) {
+                code_version::codex_backend_version_for_model("gpt-6.1-sol")
+            } else { format_client_version_to_whole() };
+            pairs.append_pair("client_version", &version);
         }
 
         Ok(url)
@@ -658,13 +662,13 @@ fn map_reasoning_effort(effort: &ProtocolReasoningEffort) -> crate::config_types
     use crate::config_types::ReasoningEffort as LocalEffort;
 
     match effort {
-        ProtocolReasoningEffort::None => LocalEffort::None,
+        ProtocolReasoningEffort::None => LocalEffort::Disabled,
         ProtocolReasoningEffort::Minimal => LocalEffort::Minimal,
         ProtocolReasoningEffort::Low => LocalEffort::Low,
         ProtocolReasoningEffort::Medium => LocalEffort::Medium,
         ProtocolReasoningEffort::High => LocalEffort::High,
+        ProtocolReasoningEffort::Max => LocalEffort::Max,
         ProtocolReasoningEffort::XHigh
-        | ProtocolReasoningEffort::Max
         | ProtocolReasoningEffort::Ultra
         | ProtocolReasoningEffort::Persistent => LocalEffort::XHigh,
         ProtocolReasoningEffort::Custom(_) => LocalEffort::Medium,
