@@ -971,6 +971,7 @@ impl ModelClient {
         let turn_state: Arc<OnceLock<String>> = Arc::new(OnceLock::new());
         let mut attempt = 0;
         let max_retries = self.provider.request_max_retries();
+        let mut did_refresh_auth = false;
         let mut request_id = String::new();
 
         loop {
@@ -1315,6 +1316,37 @@ impl ModelClient {
                     }
 
                     if let WsError::Http(response) = &err {
+                        // Recover only stored ChatGPT OAuth used by the OpenAI
+                        // route. Custom-provider credentials remain provider-owned.
+                        if response.status() == StatusCode::UNAUTHORIZED
+                            && self.config.model_provider_id == "openai"
+                            && self.provider.requires_openai_auth
+                            && auth.as_ref().is_some_and(|auth| auth.mode == AuthMode::ChatGPT)
+                        {
+                            if did_refresh_auth {
+                                return Err(CodexErr::AuthRefreshPermanent(
+                                    "Credentials were rejected after refresh; please sign in again.".to_string(),
+                                ));
+                            }
+                            did_refresh_auth = true;
+                            let manager = auth_manager.as_ref().ok_or_else(|| {
+                                CodexErr::AuthRefreshPermanent(AUTH_REQUIRED_MESSAGE.to_string())
+                            })?;
+                            match manager.refresh_token_classified().await {
+                                Ok(Some(_)) => continue,
+                                Ok(None) => return Err(CodexErr::AuthRefreshPermanent(
+                                    AUTH_REQUIRED_MESSAGE.to_string(),
+                                )),
+                                Err(error) if error.is_permanent() => {
+                                    return Err(CodexErr::AuthRefreshPermanent(error.message));
+                                }
+                                Err(_) => return Err(CodexErr::UnexpectedStatus(UnexpectedResponseError {
+                                    status: StatusCode::UNAUTHORIZED,
+                                    body: "Credential refresh failed; retry or sign in again.".to_string(),
+                                    request_id: Some(request_id.clone()),
+                                })),
+                            }
+                        }
                         if matches!(response.status(), StatusCode::NOT_FOUND | StatusCode::METHOD_NOT_ALLOWED) {
                             self.websockets_disabled.store(true, Ordering::Relaxed);
                             return self.stream_responses(prompt, log_tag).await;
@@ -2436,11 +2468,23 @@ fn map_wrapped_websocket_error_event(event: WrappedWebsocketErrorEvent) -> Optio
                 let message = error
                     .message
                     .unwrap_or_else(|| "websocket returned an error event".to_string());
-                if error.r#type.as_deref() == Some("invalid_request_error") {
+                if error.r#type.as_deref() == Some("invalid_request_error")
+                    || matches!(error.code.as_deref(), Some("context_length_exceeded" | "model_not_found" | "unsupported_model" | "invalid_value" | "invalid_enum_value" | "unsupported_parameter" | "unsupported_value"))
+                {
                     return Some(CodexErr::UnexpectedStatus(UnexpectedResponseError {
-                        status: StatusCode::BAD_REQUEST, body: message, request_id: None,
+                        status: StatusCode::BAD_REQUEST,
+                        body: serde_json::json!({"error": {
+                            "type": error.r#type, "code": error.code,
+                            "param": error.param, "message": message,
+                        }}).to_string(),
+                        request_id: None,
                     }));
                 }
+                let message = if error.code.is_some() {
+                    serde_json::json!({"error": {"code": error.code, "message": message}}).to_string()
+                } else {
+                    message
+                };
                 return Some(CodexErr::Stream(message, None, None));
             }
             return Some(CodexErr::Stream(
@@ -2783,7 +2827,14 @@ fn header_map_to_json(headers: &HeaderMap) -> Value {
     let mut ordered: BTreeMap<String, Vec<String>> = BTreeMap::new();
     for (name, value) in headers.iter() {
         let entry = ordered.entry(name.as_str().to_string()).or_default();
-        entry.push(value.to_str().unwrap_or_default().to_string());
+        // Diagnostic snapshots must never persist authentication material.
+        let sensitive = value.is_sensitive() || matches!(name.as_str(),
+            "authorization" | "proxy-authorization" | "cookie" | "api-key" | "x-api-key");
+        entry.push(if sensitive {
+            "[REDACTED]".to_string()
+        } else {
+            value.to_str().unwrap_or_default().to_string()
+        });
     }
 
     serde_json::to_value(ordered).unwrap_or(Value::Null)
@@ -2863,11 +2914,14 @@ async fn process_sse<S>(
             Ok(Some(Ok(sse))) => sse,
             Ok(Some(Err(e))) => {
                 debug!("SSE Error: {e:#}");
-                let event = CodexErr::Stream(
-                    format!("[transport] {e}"),
-                    None,
-                    Some(request_id.clone()),
-                );
+                let event = match e {
+                    eventsource_stream::EventStreamError::Transport(error) => error,
+                    other => CodexErr::Stream(
+                        format!("[transport] {other}"),
+                        None,
+                        Some(request_id.clone()),
+                    ),
+                };
                 let _ = tx_event.send(Err(event)).await;
                 return;
             }
@@ -3197,7 +3251,7 @@ async fn process_sse<S>(
                                         Some(request_id.clone()),
                                     ));
                                 } else if error.r#type.as_deref() == Some("invalid_request_error")
-                                    || matches!(error.code.as_deref(), Some("model_not_found" | "unsupported_model" | "invalid_value" | "invalid_enum_value" | "unsupported_parameter"))
+                                    || matches!(error.code.as_deref(), Some("context_length_exceeded" | "model_not_found" | "unsupported_model" | "invalid_value" | "invalid_enum_value" | "unsupported_parameter" | "unsupported_value"))
                                 {
                                     response_error = Some(CodexErr::UnexpectedStatus(UnexpectedResponseError {
                                         status: StatusCode::BAD_REQUEST,
@@ -3212,7 +3266,11 @@ async fn process_sse<S>(
                                     response_error = Some(CodexErr::ContentFilter);
                                 } else {
                                     let retry_after = try_parse_retry_after(&error, Utc::now());
-                                    let message = error.message.unwrap_or_default();
+                                    let message = if error.code.is_some() {
+                                        serde_json::json!({"error": {"code": error.code, "message": error.message}}).to_string()
+                                    } else {
+                                        error.message.unwrap_or_default()
+                                    };
                                     response_error = Some(CodexErr::Stream(
                                         message,
                                         retry_after,
@@ -4752,7 +4810,7 @@ mod tests {
             CodexErr::UnexpectedStatus(UnexpectedResponseError { status, body: message, .. }) => {
                 assert_eq!(status, StatusCode::BAD_REQUEST);
                 assert_eq!(
-                    message,
+                    serde_json::from_str::<Value>(&message).expect("error envelope")["error"]["message"],
                     "The requested model 'gpt-5.3-codex-spark' does not exist."
                 );
             }

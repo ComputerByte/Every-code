@@ -256,6 +256,162 @@ fn modern_backend_protocol_floor_is_scoped_to_oauth() {
     assert_eq!(request.headers()["version"], code_version::wire_compatible_version_for_model("gpt-6.1-sol"));
 }
 
+struct RefreshEndpointReset(Option<std::ffi::OsString>);
+
+#[test]
+fn websocket_diagnostic_headers_redact_credentials() {
+    let mut headers = HeaderMap::new();
+    for name in ["authorization", "proxy-authorization", "cookie", "api-key", "x-api-key"] {
+        headers.insert(name, reqwest::header::HeaderValue::from_static("mock-secret-token"));
+    }
+    headers.insert("version", reqwest::header::HeaderValue::from_static("0.162.1"));
+    let snapshot = header_map_to_json(&headers);
+    assert!(!snapshot.to_string().contains("mock-secret-token"));
+    assert_eq!(snapshot["authorization"][0], "[REDACTED]");
+    assert_eq!(snapshot["version"][0], "0.162.1");
+    assert_eq!(headers["authorization"], "mock-secret-token");
+}
+
+impl Drop for RefreshEndpointReset {
+    fn drop(&mut self) {
+        unsafe {
+            match self.0.take() {
+                Some(value) => std::env::set_var(auth::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR, value),
+                None => std::env::remove_var(auth::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR),
+            }
+        }
+    }
+}
+
+// accept_hdr_async requires an unboxed HTTP response as the callback error.
+#[allow(clippy::result_large_err)]
+async fn websocket_oauth_recovery_case(refresh_succeeds: bool, remains_unauthorized: bool, lite: bool) {
+    let home = tempdir().expect("isolated auth home");
+    let refresh_server = MockServer::start().await;
+    let refresh_response = if refresh_succeeds {
+        ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "access_token":"fresh-mock-token", "refresh_token":"fresh-mock-refresh"}))
+    } else {
+        ResponseTemplate::new(401).set_body_json(serde_json::json!({
+            "error":{"code":"refresh_token_expired","message":"Sign in again"}}))
+    };
+    Mock::given(method("POST")).and(path("/token"))
+        .respond_with(refresh_response).expect(1).mount(&refresh_server).await;
+    let _reset = RefreshEndpointReset(std::env::var_os(auth::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR));
+    unsafe {
+        std::env::set_var(auth::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR, format!("{}/token", refresh_server.uri()));
+    }
+    let mut tokens = CodexAuth::create_dummy_chatgpt_auth_for_testing()
+        .get_token_data().await.expect("dummy tokens");
+    tokens.id_token.raw_jwt = "e30.e30.signature".to_string();
+    tokens.account_id = None;
+    tokens.access_token = "expired-mock-token".to_string();
+    auth::write_auth_json(&auth::get_auth_file(home.path()), &auth::AuthDotJson {
+        auth_mode: Some(code_app_server_protocol::AuthMode::ChatGPT),
+        openai_api_key: None, tokens: Some(tokens), last_refresh: Some(Utc::now()),
+    }).expect("write isolated credentials");
+    let manager = AuthManager::new(home.path().to_path_buf(),
+        code_app_server_protocol::AuthMode::ChatGPT, "repair-test".to_string());
+    assert!(manager.auth().is_some());
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.expect("listener");
+    let address = listener.local_addr().expect("address");
+    let server = tokio::spawn(async move {
+        let (tcp, _) = listener.accept().await.expect("initial connection");
+        let first = tokio_tungstenite::accept_hdr_async(tcp, |request: &tokio_tungstenite::tungstenite::handshake::server::Request, _response| {
+            assert_eq!(request.headers()["authorization"], "Bearer expired-mock-token");
+            Err(tokio_tungstenite::tungstenite::http::Response::builder().status(401)
+                .body(Some("expired credential".to_string())).expect("401"))
+        }).await;
+        assert!(first.is_err());
+        if !refresh_succeeds { return None; }
+        let (tcp, _) = timeout(Duration::from_secs(3), listener.accept()).await
+            .expect("retry only after refresh").expect("retry connection");
+        let second = tokio_tungstenite::accept_hdr_async(tcp, |request: &tokio_tungstenite::tungstenite::handshake::server::Request, response| {
+            assert_eq!(request.headers()["authorization"], "Bearer fresh-mock-token");
+            if remains_unauthorized {
+                Err(tokio_tungstenite::tungstenite::http::Response::builder().status(401)
+                    .body(Some("credential rejected".to_string())).expect("401"))
+            } else { Ok(response) }
+        }).await;
+        if remains_unauthorized { assert!(second.is_err()); return None; }
+        let mut socket = second.expect("refreshed handshake");
+        let message = socket.next().await.expect("request").expect("message");
+        let body: Value = serde_json::from_str(message.to_text().expect("text")).expect("JSON");
+        socket.send(Message::Text(completion().to_string())).await.expect("complete");
+        Some(body)
+    });
+    let mut client = client_for(format!("http://{address}"), "gpt-6.1-sol", true);
+    client.auth_manager = Some(Arc::new(manager));
+    client.provider.requires_openai_auth = true;
+    client.provider.wire_api = WireApi::ResponsesWebsocket;
+    // A transport retry budget of zero must still allow the one credential recovery.
+    client.provider.request_max_retries = Some(0);
+    let request = prompt();
+    let result = if lite {
+        timeout(Duration::from_secs(5), client.stream_responses_websocket_for_family(
+            &request, None, ResponsesWebsocketVersion::V2,
+            find_family_for_model("gpt-6.1-sol").expect("family"),
+        )).await.expect("bounded Lite recovery")
+    } else {
+        timeout(Duration::from_secs(5), client.stream(&request)).await.expect("bounded recovery")
+    };
+    if refresh_succeeds && !remains_unauthorized {
+        assert_completed(result.expect("refreshed stream")).await;
+    } else {
+        match result {
+            Err(CodexErr::AuthRefreshPermanent(message)) => assert!(message.contains("again")),
+            _ => panic!("expected actionable terminal authentication error"),
+        }
+    }
+    if let Some(body) = timeout(Duration::from_secs(4), server).await.expect("server timeout").expect("server") {
+        assert_eq!(body["model"], "gpt-6.1-sol");
+        if lite {
+            assert_lite_payload(&body, "gpt-6.1-sol");
+        } else {
+            // A localhost provider has conservative metadata even with OAuth.
+            assert!(body["reasoning"].is_null());
+        }
+        assert!(!body.to_string().contains("codex-lite"));
+    }
+}
+
+#[tokio::test]
+#[serial_test::serial]
+async fn websocket_oauth_401_refreshes_and_reconnects() {
+    websocket_oauth_recovery_case(true, false, false).await;
+}
+
+#[tokio::test]
+#[serial_test::serial]
+async fn websocket_oauth_401_preserves_lite_payload_after_refresh() {
+    websocket_oauth_recovery_case(true, false, true).await;
+}
+
+#[tokio::test]
+#[serial_test::serial]
+async fn websocket_oauth_401_refresh_failure_is_terminal() {
+    websocket_oauth_recovery_case(false, false, false).await;
+}
+
+#[tokio::test]
+#[serial_test::serial]
+async fn websocket_oauth_401_after_refresh_is_terminal() {
+    websocket_oauth_recovery_case(true, true, false).await;
+}
+
+#[tokio::test]
+async fn websocket_custom_provider_401_does_not_refresh_openai_auth() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET")).respond_with(ResponseTemplate::new(401))
+        .expect(1).mount(&server).await;
+    let mut client = client_for(server.uri(), "gpt-6.1-sol", true);
+    Arc::make_mut(&mut client.config).model_provider_id = "custom".to_string();
+    client.provider.requires_openai_auth = true;
+    client.provider.wire_api = WireApi::ResponsesWebsocket;
+    let result = timeout(Duration::from_secs(3), client.stream(&prompt())).await.expect("bounded failure");
+    assert!(matches!(result, Err(CodexErr::UnexpectedStatus(error)) if error.status == StatusCode::UNAUTHORIZED));
+}
+
 #[tokio::test]
 async fn modern_public_api_models_serialize_standard_responses() {
     for spec in MODERN_MODELS {

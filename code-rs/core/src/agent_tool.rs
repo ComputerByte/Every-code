@@ -1641,7 +1641,6 @@ async fn execute_model_with_permissions(
         )
     }
 
-    let slug_for_defaults = spec_opt.map(|spec| spec.slug).unwrap_or(model);
     let spec_family = spec_opt.map(|spec| spec.family);
     let family = if let Some(spec_family) = spec_family {
         spec_family
@@ -1654,6 +1653,9 @@ async fn execute_model_with_permissions(
     } else {
         model_lower.as_str()
     };
+    // Roles have no catalog slug. Select mode defaults by the resolved CLI
+    // family, without importing its default model or replacing the executable.
+    let slug_for_defaults = spec_opt.map(|spec| spec.slug).unwrap_or(family);
 
     let command_missing = !external_agent_command_exists(&command_for_spawn);
     let use_current_exe = should_use_current_exe_for_agent(family, command_missing, config.as_ref());
@@ -3107,6 +3109,38 @@ mod tests {
         assert!(output.contains("--effort|low"));
         assert!(output.contains("-p|task"));
         assert!(!output.contains("--model|sonnet"));
+        assert!(output.contains("--allowedTools|"));
+    }
+
+    #[tokio::test]
+    async fn role_agents_preserve_mode_arguments_in_subprocess() {
+        for name in ["claude-sonnet-5-5", "review", "investigation", "architecture"] {
+            let dir = tempdir().expect("tempdir");
+            let executable = script_path(dir.path(), "claude");
+            write_argv_script(&executable);
+            let mut cfg = agent_with_command(executable.to_str().expect("path"));
+            cfg.name = name.to_string();
+            cfg.args = vec!["--model=claude-haiku-5-5".to_string()];
+            cfg.args_read_only = Some(vec![
+                "--model=claude-sonnet-5-5".to_string(),
+                "--permission-mode".to_string(),
+                "default".to_string(),
+            ]);
+            cfg.args_write = Some(vec!["--model=claude-haiku-5-5".to_string()]);
+            for read_only in [true, false] {
+                let output = execute_model_with_permissions(
+                    "mock-agent", name, "task", read_only, Some(dir.path().to_path_buf()),
+                    Some(cfg.clone()), ReasoningEffort::Low, None, None, None,
+                ).await.expect("launch explicit executable");
+                let args: Vec<&str> = output.trim().split('|').collect();
+                assert_eq!(args.contains(&"--allowedTools"), read_only, "{name}: {args:?}");
+                assert_eq!(args.contains(&"--permission-mode"), read_only);
+                assert_eq!(args.contains(&"--dangerously-skip-permissions"), !read_only);
+                let model = if read_only { "claude-sonnet-5-5" } else { "claude-haiku-5-5" };
+                assert!(output.contains(&format!("--model|{model}")));
+                assert!(output.contains("--effort|low|-p|task"));
+            }
+        }
     }
 
     #[tokio::test]

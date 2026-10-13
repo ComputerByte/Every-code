@@ -7,10 +7,27 @@ were modified. Merge and deployment require operator approval.
 
 ## Acceptance status
 
-Independent adversarial review verdict: **Claude Opus 5.5 executable resolution verified; overall interactive Claude gap remains as documented**.
+The 2026-10-13 repair restores CLI-family read-only defaults for configured role
+names, one bounded OAuth refresh after an official ChatGPT WebSocket handshake
+401, and automatic compaction for eligible context errors. Explicit error codes
+take precedence over message wording. Permanent model/parameter errors remain
+terminal; Responses-Lite serialization and exact model IDs are preserved.
+Deterministic tests exercise actual subprocess arguments, refreshed requests,
+HTTP/WS compaction with retained conversation state, and GPT-6.1 create/wait/result
+delegation to all three Claude 5.5 models, including child failure reporting.
+Fresh independent review compared both fork main and the pre-repair PR head:
+**GO for all three repairs and PR #2 merge readiness**, within the mocked
+validation scope; **NO-GO for unattended VexOrch replacement**.
+
+These repairs do not establish a sandbox. Global Claude `bypassPermissions`, MCP
+access, filesystem isolation, process cancellation, and unattended orchestration
+remain separate operational limitations. Merge readiness does not authorize
+installation, deployment, or an unattended VexOrch replacement.
+
+Original modernization review: **Claude Opus 5.5 executable resolution verified; overall interactive Claude gap remains as documented**.
 The executable resolution discrepancy between older Homebrew Claude (`/opt/homebrew/bin/claude` 2.1.191) and modern npm Claude (`/Users/byte/.npm-global/bin/claude` 2.1.296) has been repaired through explicit agent command configuration without hardcoding operator paths in portable application defaults.
 Claude Opus 5.5 authenticated execution, streaming, tool calling, and live child delegation from GPT-6.1 Sol are verified. Sonnet 5.5 and Haiku 5.5 remain verified. Opus 5.5 is enabled in the operator's agent configuration.
-As previously audited, Claude execution is via CLI agents; a native Anthropic Messages transport for the interactive main agent remains an external gap outside CLI delegation. This branch is presented as a draft for PR #2 review, not approved for merge, installation or deployment.
+As previously audited, Claude execution is via CLI agents; a native Anthropic Messages transport for the interactive main agent remains an external gap outside CLI delegation. PR #2 remains a draft for operator review; installation and deployment require separate authorization.
 
 ## Support matrix
 
@@ -183,7 +200,32 @@ cross-provider agent handoffs, and context saturation remain separately unverifi
 Exact GPT-6.1 child create/wait/result cycle and real delegation to Claude Opus 5.5,
 Sonnet 5.5, and Haiku 5.5 were verified live through the built CLI.
 
-## Validation
+## Regression repair validation (2026-10-13)
+
+Compared with fork main `e7d4a5d7c7183eaa6b433f7f9b5e9aa04336cc5c` and
+the pre-repair PR head `ef5d05449e8024875867cbe4eec3e6815e1b6f93`:
+
+| Check | Result |
+| --- | --- |
+| Core unit suite, including role arguments, OAuth/provider cases and header redaction | 815 passed; 3 ignored |
+| Real HTTP/WS context recovery and rejection fixtures | 14 passed |
+| GPT-6.1 coordinator to three Claude models plus failed child | 1 passed |
+| TUI / Auto Drive / common / version unit suites | 232 / 84 / 29 / 12 passed |
+| Existing selected integration suites | 33 passed; 2 failed |
+| Required Apple Silicon dev build / whitespace check | Passed without compiler warnings; rustfmt prohibited |
+| Strict core Clippy, all targets | Failed on existing diagnostics; exact base also fails; no repair-added diagnostics |
+
+Both integration failures (`repeated_tool_loop` and the blocked user-prompt hook)
+reproduce on the exact fork base. Global Git URL rewriting also reproduces a
+unit-fixture failure on that base; the serial core suite excludes global Git
+configuration. Optional Auto Drive all-features tests pass but emit four inherited
+fault-injection compiler warnings; its normal-feature suite is warning-free.
+Strict Clippy still reports the seven previously audited PR diagnostics, plus
+`items_after_test_module` under Rust 1.96. No full-workspace green claim is made.
+Authenticated live checks in the next section are historical; this repair uses
+isolated mocks and does not refresh production credentials.
+
+## Original modernization validation (2026-10-10)
 
 | Check | Final result |
 | --- | --- |
